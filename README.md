@@ -1,73 +1,96 @@
-# React + TypeScript + Vite
+# Photo Border
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+一个用于给照片生成相机信息边框的 React + TypeScript + Vite 应用。上传照片后，应用会尽量读取 JPEG EXIF 信息，并把品牌、设备、拍摄参数和时间渲染到可导出的成片中。
 
-Currently, two official plugins are available:
+## 功能
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- 支持单张或多张图片上传。
+- 支持读取 JPEG EXIF，自动填充品牌、设备、参数和拍摄时间。
+- 支持手动编辑边框文字信息。
+- 支持品牌 Logo 匹配、图标样式选择和 Logo 大小调整。
+- 支持模板切换，并按当前模板显示所需设置项。
+- 支持导出当前照片或批量导出全部照片。
+- 预览和导出共用 Canvas 渲染逻辑，尽量保证所见即所得。
 
-## React Compiler
+## 当前模板
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- `白底底部信息栏`：底部白色信息区，显示品牌、设备、Logo、参数和时间。
+- `背景模糊四周边框`：使用照片模糊背景作为边框，显示 Logo 和参数，并支持调节圆角大小、模糊强度和边框宽度。
 
-## Expanding the ESLint configuration
+## 技术栈
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- React 19
+- TypeScript
+- Vite
+- Canvas 2D
+- pnpm
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 本地开发
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+先安装依赖：
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+pnpm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+启动开发服务器：
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+pnpm dev
 ```
+
+生产构建：
+
+```bash
+pnpm build
+```
+
+代码检查：
+
+```bash
+pnpm lint
+```
+
+预览生产构建：
+
+```bash
+pnpm preview
+```
+
+## 使用方式
+
+1. 打开应用后上传一张或多张照片。
+2. 选择需要使用的边框模板。
+3. 根据当前模板显示的设置项调整 Logo、文字、边框宽度或模板专属参数。
+4. 点击“导出当前”导出当前照片，或点击“批量导出全部”导出队列中的全部照片。
+
+## 项目结构
+
+```text
+src/
+  App.tsx                    应用状态、上传、导出和控制面板
+  components/CanvasPreview.tsx
+                             Canvas 预览组件
+  templates/                 边框模板和导出渲染逻辑
+  brand/                     品牌识别和 Canvas Logo 绘制
+  lib/                       EXIF、图片加载、颜色等工具
+  data/                      默认数据和品牌选项
+public/
+  camera-logos/              品牌 Logo 静态资源
+  example/                   模板示例图
+```
+
+## 新增模板
+
+新增模板时建议放在 `src/templates/` 下，并导出一个 `TemplateDefinition`：
+
+- `id`、`name`、`description` 用于模板选择列表。
+- `controls` 声明该模板需要显示哪些设置项。
+- `drawExport` 负责 Canvas 渲染，预览和导出都会调用它。
+- 如果模板会改变导出画布宽度，可以实现 `getCanvasWidth`。
+
+最后在 `src/templates/index.ts` 中注册新模板。
+
+## 仓库
+
+GitHub: <https://github.com/Pylogmon/photoBorder>

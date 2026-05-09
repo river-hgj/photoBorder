@@ -236,11 +236,13 @@ function App() {
 
     if (!context) return
 
-    canvas.width = 1600
+    const outputScale = image.naturalWidth / 1600
+    canvas.width = getExportCanvasWidth(image, template, borderWidth, outputScale)
     selectedTemplate.drawExport(context, image, {
       meta: photo.meta,
       logo: photoLogo,
       borderWidth,
+      outputScale,
     })
 
     const jpegBlob = await canvasToBlob(canvas, 'image/jpeg', 0.95)
@@ -508,6 +510,20 @@ function getBrandLogoScale(source: BrandLogoSource | undefined, brandLogoScales:
 
 function getTemplateExampleUrl(templateId: TemplateId) {
   return `/example/example-${templateId}.jpg`
+}
+
+function getExportCanvasWidth(
+  image: HTMLImageElement,
+  template: TemplateId,
+  borderWidth: number,
+  outputScale: number,
+) {
+  if (template === 'blur-frame') {
+    const margin = Math.round(borderWidth * outputScale * (92 / 132))
+    return image.naturalWidth + margin * 2
+  }
+
+  return image.naturalWidth
 }
 
 function delay(ms: number) {

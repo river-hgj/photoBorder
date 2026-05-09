@@ -5,10 +5,10 @@ import type { TemplateDefinition, TemplateRenderProps } from '../types'
 function drawExport(
   context: CanvasRenderingContext2D,
   image: HTMLImageElement,
-  { meta, logo, borderWidth }: TemplateRenderProps,
+  { meta, logo, borderWidth, outputScale = 1 }: TemplateRenderProps,
 ) {
   const canvas = context.canvas
-  const margin = Math.round(borderWidth * (92 / 132))
+  const margin = Math.round(borderWidth * outputScale * (92 / 132))
   const photoWidth = canvas.width - margin * 2
   const photoHeight = Math.round(photoWidth * (image.naturalHeight / image.naturalWidth))
   const photoRect = {
@@ -23,16 +23,16 @@ function drawExport(
   context.fillStyle = '#101513'
   context.fillRect(0, 0, canvas.width, canvas.height)
   context.save()
-  context.filter = 'blur(36px) brightness(0.48) saturate(1.1)'
+  context.filter = `blur(${36 * outputScale}px) brightness(0.48) saturate(1.1)`
   drawCoverImage(context, image, 0, 0, canvas.width, canvas.height)
   context.restore()
 
-  const photoRadius = Math.round(borderWidth * (22 / 132))
+  const photoRadius = Math.round(borderWidth * outputScale * (22 / 132))
 
   context.save()
   context.shadowColor = 'rgba(0, 0, 0, 0.42)'
-  context.shadowBlur = Math.round(borderWidth * (26 / 132))
-  context.shadowOffsetY = Math.round(borderWidth * (14 / 132))
+  context.shadowBlur = Math.round(borderWidth * outputScale * (26 / 132))
+  context.shadowOffsetY = Math.round(borderWidth * outputScale * (14 / 132))
   context.fillStyle = '#0c0f10'
   drawRoundedRect(context, photoRect.x, photoRect.y, photoRect.width, photoRect.height, photoRadius)
   context.fill()
@@ -44,11 +44,11 @@ function drawExport(
   context.drawImage(image, photoRect.x, photoRect.y, photoRect.width, photoRect.height)
   context.restore()
 
-  const logoSize = 46
-  const gap = 24
+  const logoSize = 46 * outputScale
+  const gap = 24 * outputScale
   const rowCenterY = photoRect.y + photoRect.height + margin / 2
-  const logoFont = '700 42px Georgia, serif'
-  const paramsFont = '400 24px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+  const logoFont = `700 ${42 * outputScale}px Georgia, serif`
+  const paramsFont = `400 ${24 * outputScale}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`
 
   context.font = logoFont
   const logoWidth = measureCanvasBrandLogo(context, logo, meta.logo, logoSize, '#ffffff', logoFont)
@@ -75,7 +75,7 @@ function drawExport(
 
   context.font = paramsFont
   context.fillStyle = '#ffffff'
-  context.fillText(meta.params, rowStartX + logoWidth + gap, rowCenterY + 10)
+  context.fillText(meta.params, rowStartX + logoWidth + gap, rowCenterY + 10 * outputScale)
 }
 
 export const blurFrameTemplate: TemplateDefinition = {

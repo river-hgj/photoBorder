@@ -38,6 +38,7 @@ export type TemplateRenderProps = {
   meta: PhotoMeta
   logo: BrandLogoData
   borderWidth: number
+  outputScale?: number
 }
 
 export type TemplateDefinition = {

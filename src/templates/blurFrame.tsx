@@ -1,4 +1,4 @@
-import { drawCanvasBrandLogo } from '../brand/drawBrandLogo'
+import { drawCanvasBrandLogo, measureCanvasBrandLogo } from '../brand/drawBrandLogo'
 import { drawCoverImage } from '../lib/image'
 import type { TemplateDefinition, TemplateRenderProps } from '../types'
 
@@ -44,15 +44,14 @@ function drawExport(
   context.drawImage(image, photoRect.x, photoRect.y, photoRect.width, photoRect.height)
   context.restore()
 
-  const logoScale = logo.icon?.slug === 'nikon' ? 1.8 : 1
-  const logoSize = Math.round(46 * logoScale)
+  const logoSize = logo.source?.id === 'nikon' ? 58 : 46
   const gap = 24
   const rowCenterY = photoRect.y + photoRect.height + margin / 2
   const logoFont = '700 42px Georgia, serif'
   const paramsFont = '400 24px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
 
   context.font = logoFont
-  const logoWidth = logo.icon ? logoSize : context.measureText(meta.logo).width
+  const logoWidth = measureCanvasBrandLogo(context, logo, meta.logo, logoSize, '#ffffff', logoFont)
 
   context.fillStyle = '#ffffff'
   context.font = paramsFont
@@ -64,7 +63,7 @@ function drawExport(
 
   drawCanvasBrandLogo(
     context,
-    logo.icon,
+    logo,
     meta.logo,
     rowStartX,
     rowCenterY - logoSize / 2,

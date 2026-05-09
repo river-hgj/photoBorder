@@ -9,7 +9,7 @@ import { parseExif } from './lib/exif'
 import { addExifToJpeg } from './lib/exifWriter'
 import { loadImage } from './lib/image'
 import { templates } from './templates'
-import type { PhotoMeta, TemplateId } from './types'
+import type { BrandLogoImages, BrandLogoSource, LogoVariant, PhotoMeta, TemplateId } from './types'
 import './App.css'
 
 type PhotoItem = {
@@ -29,6 +29,8 @@ function App() {
   const [previewImage, setPreviewImage] = useState<HTMLImageElement | null>(null)
   const [isExporting, setIsExporting] = useState(false)
   const [exportProgress, setExportProgress] = useState('')
+  const [logoVariant, setLogoVariant] = useState<LogoVariant>('color')
+  const [brandLogoImages, setBrandLogoImages] = useState<BrandLogoImages>({})
   const inputRef = useRef<HTMLInputElement>(null)
   const photosRef = useRef<PhotoItem[]>([])
 
@@ -72,14 +74,33 @@ function App() {
     () => templates.find((item) => item.id === template) ?? templates[0],
     [template],
   )
-  const brandIcon = useMemo(() => findBrandIcon(meta), [meta])
+  const brandLogoSource = useMemo(() => findBrandIcon(meta), [meta])
+
+  useEffect(() => {
+    let isCurrent = true
+
+    loadBrandLogoImages(brandLogoSource)
+      .then((images) => {
+        if (isCurrent) setBrandLogoImages(images)
+      })
+      .catch(() => {
+        if (isCurrent) setBrandLogoImages({})
+      })
+
+    return () => {
+      isCurrent = false
+    }
+  }, [brandLogoSource])
+
   const logo = useMemo(
     () => ({
-      icon: brandIcon,
-      brandColor: brandIcon ? `#${brandIcon.hex}` : undefined,
-      lightSurfaceColor: readableBrandColor(brandIcon ? `#${brandIcon.hex}` : undefined),
+      source: brandLogoSource,
+      images: brandLogoImages,
+      variant: logoVariant,
+      brandColor: brandLogoSource?.brandColor,
+      lightSurfaceColor: readableBrandColor(brandLogoSource?.brandColor),
     }),
-    [brandIcon],
+    [brandLogoImages, brandLogoSource, logoVariant],
   )
   const templateRenderProps = useMemo(
     () => ({ meta, logo, borderWidth }),
@@ -181,11 +202,13 @@ function App() {
     const image = await loadImage(photo.url)
     const canvas = document.createElement('canvas')
     const context = canvas.getContext('2d')
-    const photoBrandIcon = findBrandIcon(photo.meta)
+    const photoBrandLogoSource = findBrandIcon(photo.meta)
     const photoLogo = {
-      icon: photoBrandIcon,
-      brandColor: photoBrandIcon ? `#${photoBrandIcon.hex}` : undefined,
-      lightSurfaceColor: readableBrandColor(photoBrandIcon ? `#${photoBrandIcon.hex}` : undefined),
+      source: photoBrandLogoSource,
+      images: await loadBrandLogoImages(photoBrandLogoSource),
+      variant: logoVariant,
+      brandColor: photoBrandLogoSource?.brandColor,
+      lightSurfaceColor: readableBrandColor(photoBrandLogoSource?.brandColor),
     }
 
     if (!context) return
@@ -334,6 +357,32 @@ function App() {
             </div>
           </section>
 
+          <section className="control-group" aria-labelledby="logo-style-title">
+            <h2 id="logo-style-title">图标样式</h2>
+            <div className="segmented-control">
+              <label className={logoVariant === 'color' ? 'segmented-control__item--active' : ''}>
+                <input
+                  type="radio"
+                  name="logoVariant"
+                  value="color"
+                  checked={logoVariant === 'color'}
+                  onChange={() => setLogoVariant('color')}
+                />
+                彩色
+              </label>
+              <label className={logoVariant === 'mono' ? 'segmented-control__item--active' : ''}>
+                <input
+                  type="radio"
+                  name="logoVariant"
+                  value="mono"
+                  checked={logoVariant === 'mono'}
+                  onChange={() => setLogoVariant('mono')}
+                />
+                单色
+              </label>
+            </div>
+          </section>
+
           <section className="control-group" aria-labelledby="border-title">
             <h2 id="border-title">边框宽度</h2>
             <label className="range-field">
@@ -387,6 +436,24 @@ function hasMetaChanges(current: PhotoMeta, original: PhotoMeta) {
     current.params !== original.params ||
     current.date !== original.date
   )
+}
+
+async function loadBrandLogoImages(source: BrandLogoSource | undefined) {
+  if (!source) return {}
+
+  const entries = await Promise.all(
+    Object.entries(source.assets).map(async ([key, url]) => {
+      if (!url) return undefined
+
+      try {
+        return [key, await loadImage(url)] as const
+      } catch {
+        return undefined
+      }
+    }),
+  )
+
+  return Object.fromEntries(entries.filter((entry) => entry !== undefined)) as BrandLogoImages
 }
 
 function delay(ms: number) {

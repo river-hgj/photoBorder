@@ -260,12 +260,45 @@
 .field-grid input:focus,
 .field-grid select:focus,
 .range-field input:focus-visible,
+.segmented-control label:has(input:focus-visible),
 .export-button:focus-visible,
 .photo-list__item:focus-visible,
 .file-picker:focus-within,
 .empty-upload:focus-visible {
   outline: 2px solid #1f2937;
   outline-offset: 2px;
+}
+
+.segmented-control {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 3px;
+  border: 1px solid #d9dce3;
+  border-radius: 8px;
+  background: #f4f5f7;
+}
+
+.segmented-control label {
+  display: grid;
+  place-items: center;
+  min-height: 34px;
+  border-radius: 6px;
+  color: #69707d;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.segmented-control input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.segmented-control__item--active {
+  color: #14161a !important;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(20, 22, 26, 0.12);
 }
 
 .range-field {

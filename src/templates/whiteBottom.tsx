@@ -35,7 +35,7 @@ function drawExport(
 
   drawCanvasBrandLogo(
     context,
-    logo.icon,
+    logo,
     meta.logo,
     canvas.width * 0.64,
     panelCenterY - logoSize / 2,

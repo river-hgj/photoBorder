@@ -1,6 +1,5 @@
-import type { SimpleIcon } from 'simple-icons'
-
 export type TemplateId = 'blur-frame' | 'white-bottom'
+export type LogoVariant = 'color' | 'mono'
 
 export type PhotoMeta = {
   logo: string
@@ -10,8 +9,30 @@ export type PhotoMeta = {
   date: string
 }
 
+export type BrandLogoAssets = {
+  color?: string
+  black?: string
+  white?: string
+}
+
+export type BrandLogoSource = {
+  id: string
+  name: string
+  aliases: string[]
+  assets: BrandLogoAssets
+  brandColor?: string
+}
+
+export type BrandLogoImages = {
+  color?: HTMLImageElement
+  black?: HTMLImageElement
+  white?: HTMLImageElement
+}
+
 export type BrandLogoData = {
-  icon?: SimpleIcon
+  source?: BrandLogoSource
+  images?: BrandLogoImages
+  variant: LogoVariant
   brandColor?: string
   lightSurfaceColor?: string
 }

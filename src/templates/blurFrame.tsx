@@ -87,7 +87,7 @@ function drawExport(
 
 export const blurFrameTemplate: TemplateDefinition = {
   id: 'blur-frame',
-  name: '背景模糊四周边框',
+  name: '柔焦光影框',
   description: '适合电影感和暗色照片，底部水平显示白色品牌图标与参数。',
   controls: {
     logoStyle: true,

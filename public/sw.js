@@ -1,4 +1,4 @@
-const CACHE_NAME = 'photo-border-v2'
+const CACHE_NAME = 'photo-border-v3'
 const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest', '/favicon.png', '/icon-192.png', '/icon-512.png']
 
 self.addEventListener('install', (event) => {

@@ -12,32 +12,50 @@ import { templates } from './templates'
 import type { PhotoMeta, TemplateId } from './types'
 import './App.css'
 
+type PhotoItem = {
+  id: string
+  url: string
+  fileName: string
+  file: File
+  meta: PhotoMeta
+  originalMeta: PhotoMeta
+}
+
 function App() {
   const [template, setTemplate] = useState<TemplateId>('white-bottom')
-  const [photoUrl, setPhotoUrl] = useState('')
-  const [fileName, setFileName] = useState('')
-  const [meta, setMeta] = useState<PhotoMeta>(defaultMeta)
-  const [originalMeta, setOriginalMeta] = useState<PhotoMeta>(defaultMeta)
-  const [sourceFile, setSourceFile] = useState<File | null>(null)
+  const [photos, setPhotos] = useState<PhotoItem[]>([])
+  const [selectedPhotoId, setSelectedPhotoId] = useState('')
   const [borderWidth, setBorderWidth] = useState(132)
   const [previewImage, setPreviewImage] = useState<HTMLImageElement | null>(null)
   const [isExporting, setIsExporting] = useState(false)
+  const [exportProgress, setExportProgress] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const photosRef = useRef<PhotoItem[]>([])
+
+  const selectedPhoto = useMemo(
+    () => photos.find((photo) => photo.id === selectedPhotoId) ?? photos[0],
+    [photos, selectedPhotoId],
+  )
+  const meta = selectedPhoto?.meta ?? defaultMeta
+
+  useEffect(() => {
+    photosRef.current = photos
+  }, [photos])
 
   useEffect(() => {
     return () => {
-      if (photoUrl) URL.revokeObjectURL(photoUrl)
+      photosRef.current.forEach((photo) => URL.revokeObjectURL(photo.url))
     }
-  }, [photoUrl])
+  }, [])
 
   useEffect(() => {
-    if (!photoUrl) {
+    if (!selectedPhoto?.url) {
       return
     }
 
     let isCurrent = true
 
-    loadImage(photoUrl)
+    loadImage(selectedPhoto.url)
       .then((image) => {
         if (isCurrent) setPreviewImage(image)
       })
@@ -48,7 +66,7 @@ function App() {
     return () => {
       isCurrent = false
     }
-  }, [photoUrl])
+  }, [selectedPhoto?.url])
 
   const selectedTemplate = useMemo(
     () => templates.find((item) => item.id === template) ?? templates[0],
@@ -69,75 +87,136 @@ function App() {
   )
 
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
+    const files = Array.from(event.target.files ?? [])
 
-    if (!file) return
+    if (!files.length) return
 
-    const nextUrl = URL.createObjectURL(file)
-    setPhotoUrl((currentUrl) => {
-      if (currentUrl) URL.revokeObjectURL(currentUrl)
-      return nextUrl
+    const nextPhotos = await Promise.all(
+      files.map(async (file, index) => {
+        const parsedMeta = await parseExif(file)
+
+        return {
+          id: `${file.name}-${file.lastModified}-${file.size}-${index}`,
+          url: URL.createObjectURL(file),
+          fileName: file.name,
+          file,
+          meta: parsedMeta,
+          originalMeta: parsedMeta,
+        }
+      }),
+    )
+
+    setPhotos((currentPhotos) => {
+      currentPhotos.forEach((photo) => URL.revokeObjectURL(photo.url))
+      return nextPhotos
     })
-    setFileName(file.name)
-    setSourceFile(file)
+    setSelectedPhotoId(nextPhotos[0]?.id ?? '')
+    setPreviewImage(null)
+    event.target.value = ''
+  }
 
-    const parsedMeta = await parseExif(file)
-    setMeta(parsedMeta)
-    setOriginalMeta(parsedMeta)
+  function updateSelectedPhoto(updater: (photo: PhotoItem) => PhotoItem) {
+    if (!selectedPhoto) return
+
+    setPhotos((currentPhotos) =>
+      currentPhotos.map((photo) => (photo.id === selectedPhoto.id ? updater(photo) : photo)),
+    )
   }
 
   function updateMeta(key: keyof PhotoMeta, value: string) {
-    setMeta((current) => ({ ...current, [key]: value }))
+    updateSelectedPhoto((photo) => ({
+      ...photo,
+      meta: { ...photo.meta, [key]: value },
+    }))
   }
 
   function selectBrand(value: string) {
     if (!value) return
-    setMeta((current) => ({ ...current, maker: value, logo: value }))
+    updateSelectedPhoto((photo) => ({
+      ...photo,
+      meta: { ...photo.meta, maker: value, logo: value },
+    }))
   }
 
   function selectLogo(value: string) {
     if (!value) return
-    setMeta((current) => ({ ...current, logo: value }))
+    updateSelectedPhoto((photo) => ({
+      ...photo,
+      meta: { ...photo.meta, logo: value },
+    }))
   }
 
   async function exportImage() {
-    if (!photoUrl) return
+    if (!selectedPhoto) return
+
+    setIsExporting(true)
+    setExportProgress('正在导出当前照片...')
+
+    try {
+      await exportPhoto(selectedPhoto)
+    } finally {
+      setIsExporting(false)
+      setExportProgress('')
+    }
+  }
+
+  async function exportAllImages() {
+    if (!photos.length) return
 
     setIsExporting(true)
 
     try {
-      const image = await loadImage(photoUrl)
-      const canvas = document.createElement('canvas')
-      const context = canvas.getContext('2d')
-
-      if (!context) return
-
-      canvas.width = 1600
-      selectedTemplate.drawExport(context, image, templateRenderProps)
-
-      const jpegBlob = await canvasToBlob(canvas, 'image/jpeg', 0.95)
-      const outputBlob = await addExifToJpeg(
-        jpegBlob,
-        sourceFile,
-        meta,
-        hasMetaChanges(meta, originalMeta),
-      )
-      const outputUrl = URL.createObjectURL(outputBlob)
-      const link = document.createElement('a')
-      link.href = outputUrl
-      link.download = `${fileName.replace(/\.[^.]+$/, '') || 'photo-border'}-${template}.jpg`
-      link.click()
-      window.setTimeout(() => URL.revokeObjectURL(outputUrl), 0)
+      for (const [index, photo] of photos.entries()) {
+        setExportProgress(`正在导出 ${index + 1}/${photos.length}`)
+        await exportPhoto(photo)
+        await delay(180)
+      }
     } finally {
       setIsExporting(false)
+      setExportProgress('')
     }
+  }
+
+  async function exportPhoto(photo: PhotoItem) {
+    const image = await loadImage(photo.url)
+    const canvas = document.createElement('canvas')
+    const context = canvas.getContext('2d')
+    const photoBrandIcon = findBrandIcon(photo.meta)
+    const photoLogo = {
+      icon: photoBrandIcon,
+      brandColor: photoBrandIcon ? `#${photoBrandIcon.hex}` : undefined,
+      lightSurfaceColor: readableBrandColor(photoBrandIcon ? `#${photoBrandIcon.hex}` : undefined),
+    }
+
+    if (!context) return
+
+    canvas.width = 1600
+    selectedTemplate.drawExport(context, image, {
+      meta: photo.meta,
+      logo: photoLogo,
+      borderWidth,
+    })
+
+    const jpegBlob = await canvasToBlob(canvas, 'image/jpeg', 0.95)
+    const outputBlob = await addExifToJpeg(
+      jpegBlob,
+      photo.file,
+      photo.meta,
+      hasMetaChanges(photo.meta, photo.originalMeta),
+    )
+    const outputUrl = URL.createObjectURL(outputBlob)
+    const link = document.createElement('a')
+    link.href = outputUrl
+    link.download = `${photo.fileName.replace(/\.[^.]+$/, '') || 'photo-border'}-${template}.jpg`
+    link.click()
+    window.setTimeout(() => URL.revokeObjectURL(outputUrl), 0)
   }
 
   return (
     <main className="app-shell">
       <section className="workbench">
         <div className="preview-stage">
-          {previewImage ? (
+          {selectedPhoto && previewImage ? (
             <CanvasPreview
               image={previewImage}
               template={selectedTemplate}
@@ -160,10 +239,31 @@ function App() {
           </div>
 
           <label className="file-picker">
-            <input ref={inputRef} type="file" accept="image/*" onChange={handleFileChange} />
-            <span>{photoUrl ? '更换照片' : '上传照片'}</span>
-            <small>{fileName || '支持本地照片，JPEG 可读取拍摄参数'}</small>
+            <input ref={inputRef} type="file" accept="image/*" multiple onChange={handleFileChange} />
+            <span>{photos.length ? '更换照片' : '上传照片'}</span>
+            <small>
+              {photos.length ? `${photos.length} 张照片，当前：${selectedPhoto?.fileName}` : '支持多选照片，JPEG 可读取拍摄参数'}
+            </small>
           </label>
+
+          {photos.length > 1 ? (
+            <section className="control-group" aria-labelledby="batch-title">
+              <h2 id="batch-title">照片队列</h2>
+              <div className="photo-list">
+                {photos.map((photo, index) => (
+                  <button
+                    className={`photo-list__item ${photo.id === selectedPhoto?.id ? 'photo-list__item--active' : ''}`}
+                    type="button"
+                    key={photo.id}
+                    onClick={() => setSelectedPhotoId(photo.id)}
+                  >
+                    <span>{index + 1}</span>
+                    <strong>{photo.fileName}</strong>
+                  </button>
+                ))}
+              </div>
+            </section>
+          ) : null}
 
           <section className="control-group" aria-labelledby="template-title">
             <h2 id="template-title">边框模板</h2>
@@ -249,9 +349,14 @@ function App() {
             </label>
           </section>
 
-          <button className="export-button" type="button" disabled={!photoUrl || isExporting} onClick={exportImage}>
-            {isExporting ? '正在生成...' : `导出${selectedTemplate.name}`}
-          </button>
+          <div className="export-actions">
+            <button className="export-button" type="button" disabled={!selectedPhoto || isExporting} onClick={exportImage}>
+              {isExporting ? exportProgress || '正在生成...' : `导出当前${selectedTemplate.name}`}
+            </button>
+            <button className="export-button export-button--secondary" type="button" disabled={!photos.length || isExporting} onClick={exportAllImages}>
+              批量导出全部
+            </button>
+          </div>
         </aside>
       </section>
     </main>
@@ -282,6 +387,10 @@ function hasMetaChanges(current: PhotoMeta, original: PhotoMeta) {
     current.params !== original.params ||
     current.date !== original.date
   )
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms))
 }
 
 export default App

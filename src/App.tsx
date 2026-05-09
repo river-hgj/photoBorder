@@ -519,10 +519,10 @@ function App() {
 
           <div className="export-actions">
             <button className="export-button" type="button" disabled={!selectedPhoto || isExporting} onClick={exportImage}>
-              {isExporting ? exportProgress || '正在生成...' : `导出当前${selectedTemplate.name}`}
+              {isExporting ? exportProgress || '正在生成...' : `导出当前照片`}
             </button>
             <button className="export-button export-button--secondary" type="button" disabled={!photos.length || isExporting} onClick={exportAllImages}>
-              批量导出全部
+              批量导出全部照片
             </button>
           </div>
         </aside>

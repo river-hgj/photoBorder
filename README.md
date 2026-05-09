@@ -1,6 +1,6 @@
 # Photo Border
 
-一个用于给照片生成相机信息边框的 React + TypeScript + Vite 应用。上传照片后，应用会尽量读取 JPEG EXIF 信息，并把品牌、设备、拍摄参数和时间渲染到可导出的成片中。
+一个用于给照片生成相机信息边框的 PWA 应用。上传照片后，应用会尽量读取 JPEG EXIF 信息，并把品牌、设备、拍摄参数和时间渲染到可导出的成片中。
 
 ## 功能
 
@@ -79,6 +79,10 @@ public/
   camera-logos/              品牌 Logo 静态资源
   example/                   模板示例图
 ```
+
+## 资源来源
+
+`public/camera-logos/` 中的品牌图标文件来自 [Camera-Logos-SVG](https://github.com/HiSeatown/Camera-Logos-SVG) 项目。
 
 ## 新增模板
 

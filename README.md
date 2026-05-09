@@ -1,6 +1,12 @@
-# Photo Border
+<p align="center">
+  <img src="public/app-icon.png" width="112" height="112" alt="Photo Border 应用图标">
+</p>
 
-一个用于给照片生成相机信息边框的 PWA 应用。上传照片后，应用会尽量读取 JPEG EXIF 信息，并把品牌、设备、拍摄参数和时间渲染到可导出的成片中。
+<h1 align="center">Photo Border</h1>
+
+<p align="center">
+  一个用于给照片生成相机信息边框的 PWA 应用。上传照片后，应用会尽量读取 JPEG EXIF 信息，并把品牌、设备、拍摄参数和时间渲染到可导出的成片中。
+</p>
 
 ## 功能
 

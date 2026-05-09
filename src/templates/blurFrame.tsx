@@ -1,5 +1,5 @@
 import { drawCanvasBrandLogo } from '../brand/drawBrandLogo'
-import { drawContainedImage, drawCoverImage } from '../lib/image'
+import { drawCoverImage } from '../lib/image'
 import type { TemplateDefinition, TemplateRenderProps } from '../types'
 
 function drawExport(
@@ -8,7 +8,17 @@ function drawExport(
   { meta, logo, borderWidth }: TemplateRenderProps,
 ) {
   const canvas = context.canvas
-  canvas.height = 1060
+  const margin = Math.round(borderWidth * (92 / 132))
+  const photoWidth = canvas.width - margin * 2
+  const photoHeight = Math.round(photoWidth * (image.naturalHeight / image.naturalWidth))
+  const photoRect = {
+    x: margin,
+    y: margin,
+    width: photoWidth,
+    height: photoHeight,
+  }
+
+  canvas.height = photoHeight + margin * 2
 
   context.fillStyle = '#101513'
   context.fillRect(0, 0, canvas.width, canvas.height)
@@ -17,41 +27,84 @@ function drawExport(
   drawCoverImage(context, image, 0, 0, canvas.width, canvas.height)
   context.restore()
 
-  const margin = Math.round(borderWidth * (92 / 132))
-  const infoHeight = Math.round(borderWidth * (134 / 132))
-  const photoWidth = canvas.width - margin * 2
-  const photoHeight = canvas.height - margin * 2 - infoHeight
+  const photoRadius = Math.round(borderWidth * (22 / 132))
 
-  drawContainedImage(context, image, margin, margin, photoWidth, photoHeight)
+  context.save()
+  context.shadowColor = 'rgba(0, 0, 0, 0.42)'
+  context.shadowBlur = Math.round(borderWidth * (26 / 132))
+  context.shadowOffsetY = Math.round(borderWidth * (14 / 132))
+  context.fillStyle = '#0c0f10'
+  drawRoundedRect(context, photoRect.x, photoRect.y, photoRect.width, photoRect.height, photoRadius)
+  context.fill()
+  context.restore()
 
-  context.fillStyle = 'rgba(10, 15, 14, 0.62)'
-  context.fillRect(margin, margin + photoHeight, photoWidth, infoHeight)
+  context.save()
+  drawRoundedRect(context, photoRect.x, photoRect.y, photoRect.width, photoRect.height, photoRadius)
+  context.clip()
+  context.drawImage(image, photoRect.x, photoRect.y, photoRect.width, photoRect.height)
+  context.restore()
+
+  const logoScale = logo.icon?.slug === 'nikon' ? 1.8 : 1
+  const logoSize = Math.round(46 * logoScale)
+  const gap = 24
+  const rowCenterY = photoRect.y + photoRect.height + margin / 2
+  const logoFont = '700 42px Georgia, serif'
+  const paramsFont = '400 24px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+
+  context.font = logoFont
+  const logoWidth = logo.icon ? logoSize : context.measureText(meta.logo).width
+
+  context.fillStyle = '#ffffff'
+  context.font = paramsFont
+  context.textAlign = 'left'
+
+  const paramsWidth = context.measureText(meta.params).width
+  const rowWidth = logoWidth + gap + paramsWidth
+  const rowStartX = canvas.width / 2 - rowWidth / 2
 
   drawCanvasBrandLogo(
     context,
     logo.icon,
     meta.logo,
-    canvas.width / 2 - 24,
-    margin + photoHeight + infoHeight * 0.31,
-    44,
-    'right',
-    logo.brandColor ?? '#f4f6f2',
-    '700 42px Georgia, serif',
+    rowStartX,
+    rowCenterY - logoSize / 2,
+    logoSize,
+    'left',
+    '#ffffff',
+    logoFont,
   )
 
-  context.font = '500 32px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-  context.textAlign = 'left'
-  context.fillText(meta.device, canvas.width / 2 + 18, margin + photoHeight + infoHeight * 0.55)
-
-  context.fillStyle = 'rgba(244, 246, 242, 0.82)'
-  context.font = '400 24px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-  context.textAlign = 'center'
-  context.fillText(meta.params, canvas.width / 2, margin + photoHeight + infoHeight * 0.88)
+  context.font = paramsFont
+  context.fillStyle = '#ffffff'
+  context.fillText(meta.params, rowStartX + logoWidth + gap, rowCenterY + 10)
 }
 
 export const blurFrameTemplate: TemplateDefinition = {
   id: 'blur-frame',
   name: '背景模糊四周边框',
-  description: '适合电影感和暗色照片，底部居中显示品牌与参数。',
+  description: '适合电影感和暗色照片，底部水平显示白色品牌图标与参数。',
   drawExport,
+}
+
+function drawRoundedRect(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+) {
+  const normalizedRadius = Math.min(radius, width / 2, height / 2)
+
+  context.beginPath()
+  context.moveTo(x + normalizedRadius, y)
+  context.lineTo(x + width - normalizedRadius, y)
+  context.quadraticCurveTo(x + width, y, x + width, y + normalizedRadius)
+  context.lineTo(x + width, y + height - normalizedRadius)
+  context.quadraticCurveTo(x + width, y + height, x + width - normalizedRadius, y + height)
+  context.lineTo(x + normalizedRadius, y + height)
+  context.quadraticCurveTo(x, y + height, x, y + height - normalizedRadius)
+  context.lineTo(x, y + normalizedRadius)
+  context.quadraticCurveTo(x, y, x + normalizedRadius, y)
+  context.closePath()
 }

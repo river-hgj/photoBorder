@@ -24,9 +24,14 @@ function drawExport(
 
   context.fillStyle = '#101513'
   context.fillRect(0, 0, canvas.width, canvas.height)
+
   context.save()
-  context.filter = `blur(${blurIntensity * outputScale}px) brightness(0.48) saturate(1.1)`
-  drawCoverImage(context, image, 0, 0, canvas.width, canvas.height)
+  if (shouldUseCanvasBlurFallback()) {
+    drawBlurredBackgroundFallback(context, image, canvas.width, canvas.height, blurIntensity * outputScale)
+  } else {
+    context.filter = `blur(${blurIntensity * outputScale}px) brightness(0.48) saturate(1.1)`
+    drawCoverImage(context, image, 0, 0, canvas.width, canvas.height)
+  }
   context.restore()
 
   const photoRadius = Math.round(cornerRadius * outputScale)
@@ -114,6 +119,46 @@ export const blurFrameTemplate: TemplateDefinition = {
     return image.naturalWidth + margin * 2
   },
   drawExport,
+}
+
+function shouldUseCanvasBlurFallback() {
+  if (typeof navigator === 'undefined') return false
+
+  const platform = navigator.platform || ''
+  const userAgent = navigator.userAgent || ''
+  const isIpadOsDesktopMode = platform === 'MacIntel' && navigator.maxTouchPoints > 1
+
+  return /iPad|iPhone|iPod/.test(userAgent) || isIpadOsDesktopMode
+}
+
+function drawBlurredBackgroundFallback(
+  context: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  width: number,
+  height: number,
+  blurRadius: number,
+) {
+  const scale = Math.min(32, Math.max(4, Math.round(blurRadius / 2)))
+  const blurCanvas = document.createElement('canvas')
+  const blurContext = blurCanvas.getContext('2d')
+
+  if (!blurContext) {
+    drawCoverImage(context, image, 0, 0, width, height)
+    return
+  }
+
+  blurCanvas.width = Math.max(1, Math.round(width / scale))
+  blurCanvas.height = Math.max(1, Math.round(height / scale))
+
+  blurContext.imageSmoothingEnabled = true
+  blurContext.imageSmoothingQuality = 'high'
+  drawCoverImage(blurContext, image, 0, 0, blurCanvas.width, blurCanvas.height)
+
+  context.imageSmoothingEnabled = true
+  context.imageSmoothingQuality = 'high'
+  context.drawImage(blurCanvas, 0, 0, width, height)
+  context.fillStyle = 'rgba(0, 0, 0, 0.52)'
+  context.fillRect(0, 0, width, height)
 }
 
 function drawRoundedRect(

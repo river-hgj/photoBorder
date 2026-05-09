@@ -6,6 +6,7 @@ import { brandOptions } from './data/brandOptions'
 import { defaultMeta } from './data/defaults'
 import { readableBrandColor } from './lib/color'
 import { parseExif } from './lib/exif'
+import { addExifToJpeg } from './lib/exifWriter'
 import { loadImage } from './lib/image'
 import { templates } from './templates'
 import type { PhotoMeta, TemplateId } from './types'
@@ -16,6 +17,8 @@ function App() {
   const [photoUrl, setPhotoUrl] = useState('')
   const [fileName, setFileName] = useState('')
   const [meta, setMeta] = useState<PhotoMeta>(defaultMeta)
+  const [originalMeta, setOriginalMeta] = useState<PhotoMeta>(defaultMeta)
+  const [sourceFile, setSourceFile] = useState<File | null>(null)
   const [borderWidth, setBorderWidth] = useState(132)
   const [previewImage, setPreviewImage] = useState<HTMLImageElement | null>(null)
   const [isExporting, setIsExporting] = useState(false)
@@ -76,7 +79,11 @@ function App() {
       return nextUrl
     })
     setFileName(file.name)
-    setMeta(await parseExif(file))
+    setSourceFile(file)
+
+    const parsedMeta = await parseExif(file)
+    setMeta(parsedMeta)
+    setOriginalMeta(parsedMeta)
   }
 
   function updateMeta(key: keyof PhotoMeta, value: string) {
@@ -108,10 +115,19 @@ function App() {
       canvas.width = 1600
       selectedTemplate.drawExport(context, image, templateRenderProps)
 
+      const jpegBlob = await canvasToBlob(canvas, 'image/jpeg', 0.95)
+      const outputBlob = await addExifToJpeg(
+        jpegBlob,
+        sourceFile,
+        meta,
+        hasMetaChanges(meta, originalMeta),
+      )
+      const outputUrl = URL.createObjectURL(outputBlob)
       const link = document.createElement('a')
-      link.href = canvas.toDataURL('image/png')
-      link.download = `${fileName.replace(/\.[^.]+$/, '') || 'photo-border'}-${template}.png`
+      link.href = outputUrl
+      link.download = `${fileName.replace(/\.[^.]+$/, '') || 'photo-border'}-${template}.jpg`
       link.click()
+      window.setTimeout(() => URL.revokeObjectURL(outputUrl), 0)
     } finally {
       setIsExporting(false)
     }
@@ -239,6 +255,32 @@ function App() {
         </aside>
       </section>
     </main>
+  )
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality?: number) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve(blob)
+          return
+        }
+
+        reject(new Error('Failed to export canvas.'))
+      },
+      type,
+      quality,
+    )
+  })
+}
+
+function hasMetaChanges(current: PhotoMeta, original: PhotoMeta) {
+  return (
+    current.maker !== original.maker ||
+    current.device !== original.device ||
+    current.params !== original.params ||
+    current.date !== original.date
   )
 }
 

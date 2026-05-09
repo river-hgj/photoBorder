@@ -25,7 +25,7 @@ function App() {
   const [template, setTemplate] = useState<TemplateId>('white-bottom')
   const [photos, setPhotos] = useState<PhotoItem[]>([])
   const [selectedPhotoId, setSelectedPhotoId] = useState('')
-  const [borderWidth, setBorderWidth] = useState(132)
+  const [borderWidth, setBorderWidth] = useState(88)
   const [previewImage, setPreviewImage] = useState<HTMLImageElement | null>(null)
   const [isExporting, setIsExporting] = useState(false)
   const [exportProgress, setExportProgress] = useState('')

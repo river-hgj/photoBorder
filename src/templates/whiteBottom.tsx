@@ -66,5 +66,10 @@ export const whiteBottomTemplate: TemplateDefinition = {
   id: 'white-bottom',
   name: '白底底部信息栏',
   description: '适合旅行、街拍和明亮照片，信息分区更清晰。',
+  controls: {
+    logoStyle: true,
+    metaFields: ['logo', 'maker', 'device', 'params', 'date'],
+    borderWidth: true,
+  },
   drawExport,
 }

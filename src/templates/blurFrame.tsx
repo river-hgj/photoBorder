@@ -5,8 +5,10 @@ import type { TemplateDefinition, TemplateRenderProps } from '../types'
 function drawExport(
   context: CanvasRenderingContext2D,
   image: HTMLImageElement,
-  { meta, logo, borderWidth, outputScale = 1 }: TemplateRenderProps,
+  { meta, logo, borderWidth, adjustments, outputScale = 1 }: TemplateRenderProps,
 ) {
+  const blurIntensity = adjustments.blurIntensity ?? 36
+  const cornerRadius = adjustments.cornerRadius ?? 16
   const canvas = context.canvas
   const margin = Math.round(borderWidth * outputScale * (92 / 132))
   const photoWidth = canvas.width - margin * 2
@@ -23,11 +25,11 @@ function drawExport(
   context.fillStyle = '#101513'
   context.fillRect(0, 0, canvas.width, canvas.height)
   context.save()
-  context.filter = `blur(${36 * outputScale}px) brightness(0.48) saturate(1.1)`
+  context.filter = `blur(${blurIntensity * outputScale}px) brightness(0.48) saturate(1.1)`
   drawCoverImage(context, image, 0, 0, canvas.width, canvas.height)
   context.restore()
 
-  const photoRadius = Math.round(borderWidth * outputScale * (22 / 132))
+  const photoRadius = Math.round(cornerRadius * outputScale)
 
   context.save()
   context.shadowColor = 'rgba(0, 0, 0, 0.42)'
@@ -82,6 +84,35 @@ export const blurFrameTemplate: TemplateDefinition = {
   id: 'blur-frame',
   name: '背景模糊四周边框',
   description: '适合电影感和暗色照片，底部水平显示白色品牌图标与参数。',
+  controls: {
+    logoStyle: true,
+    metaFields: ['logo', 'params'],
+    borderWidth: true,
+    adjustments: [
+      {
+        id: 'cornerRadius',
+        label: '圆角大小',
+        min: 0,
+        max: 64,
+        step: 2,
+        defaultValue: 16,
+        unit: 'px',
+      },
+      {
+        id: 'blurIntensity',
+        label: '模糊强度',
+        min: 0,
+        max: 72,
+        step: 2,
+        defaultValue: 36,
+        unit: 'px',
+      },
+    ],
+  },
+  getCanvasWidth: (image, { borderWidth, outputScale = 1 }) => {
+    const margin = Math.round(borderWidth * outputScale * (92 / 132))
+    return image.naturalWidth + margin * 2
+  },
   drawExport,
 }
 

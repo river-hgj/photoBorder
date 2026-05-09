@@ -410,6 +410,21 @@
   text-align: right;
 }
 
+.template-adjustment-field {
+  grid-template-columns: 72px 1fr 56px;
+}
+
+.template-adjustment-field span {
+  color: #606774;
+  text-align: left;
+}
+
+.template-adjustment-field output {
+  color: #17191d;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 .export-actions {
   display: grid;
   gap: 10px;
@@ -546,11 +561,13 @@
     min-height: 118px;
   }
 
-  .logo-scale-field {
+  .logo-scale-field,
+  .template-adjustment-field {
     grid-template-columns: 1fr 58px;
   }
 
-  .logo-scale-field span {
+  .logo-scale-field span,
+  .template-adjustment-field span {
     grid-column: 1 / -1;
   }
 }

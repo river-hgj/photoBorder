@@ -9,8 +9,17 @@ import { parseExif } from './lib/exif'
 import { addExifToJpeg } from './lib/exifWriter'
 import { loadImage } from './lib/image'
 import { templates } from './templates'
-import type { BrandLogoImages, BrandLogoSource, PhotoMeta, TemplateId } from './types'
+import type {
+  BrandLogoImages,
+  BrandLogoSource,
+  PhotoMeta,
+  TemplateAdjustmentControl,
+  TemplateDefinition,
+  TemplateId,
+} from './types'
 import './App.css'
+
+const emptyTemplateAdjustments: Record<string, number> = {}
 
 type PhotoItem = {
   id: string
@@ -31,6 +40,7 @@ function App() {
   const [exportProgress, setExportProgress] = useState('')
   const [selectedLogoAssetIds, setSelectedLogoAssetIds] = useState<Record<string, string>>({})
   const [brandLogoScales, setBrandLogoScales] = useState<Record<string, number>>({})
+  const [templateAdjustments, setTemplateAdjustments] = useState<Record<string, Record<string, number>>>({})
   const [brandLogoImages, setBrandLogoImages] = useState<BrandLogoImages>({})
   const inputRef = useRef<HTMLInputElement>(null)
   const photosRef = useRef<PhotoItem[]>([])
@@ -75,6 +85,9 @@ function App() {
     () => templates.find((item) => item.id === template) ?? templates[0],
     [template],
   )
+  const templateControls = selectedTemplate.controls
+  const visibleMetaFields = templateControls.metaFields ?? []
+  const selectedTemplateAdjustments = templateAdjustments[selectedTemplate.id] ?? emptyTemplateAdjustments
   const brandLogoSource = useMemo(() => findBrandIcon(meta), [meta])
 
   useEffect(() => {
@@ -107,8 +120,8 @@ function App() {
     [brandLogoImages, brandLogoSource, logoScale, selectedLogoAssetId],
   )
   const templateRenderProps = useMemo(
-    () => ({ meta, logo, borderWidth }),
-    [borderWidth, logo, meta],
+    () => ({ meta, logo, borderWidth, adjustments: selectedTemplateAdjustments }),
+    [borderWidth, logo, meta, selectedTemplateAdjustments],
   )
 
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -189,6 +202,16 @@ function App() {
     }))
   }
 
+  function updateTemplateAdjustment(adjustmentId: string, value: number) {
+    setTemplateAdjustments((current) => ({
+      ...current,
+      [selectedTemplate.id]: {
+        ...current[selectedTemplate.id],
+        [adjustmentId]: value,
+      },
+    }))
+  }
+
   async function exportImage() {
     if (!selectedPhoto) return
 
@@ -237,11 +260,12 @@ function App() {
     if (!context) return
 
     const outputScale = image.naturalWidth / 1600
-    canvas.width = getExportCanvasWidth(image, template, borderWidth, outputScale)
+    canvas.width = getExportCanvasWidth(image, selectedTemplate, borderWidth, selectedTemplateAdjustments, outputScale)
     selectedTemplate.drawExport(context, image, {
       meta: photo.meta,
       logo: photoLogo,
       borderWidth,
+      adjustments: selectedTemplateAdjustments,
       outputScale,
     })
 
@@ -335,109 +359,149 @@ function App() {
             </div>
           </section>
 
-          <section className="control-group" aria-labelledby="logo-style-title">
-            <h2 id="logo-style-title">品牌图标</h2>
-            {brandLogoSource ? (
-              <div className="logo-picker">
-                {brandLogoSource.assets.map((asset) => (
-                  <label
-                    className={`logo-option ${selectedLogoAssetId === asset.id ? 'logo-option--active' : ''}`}
-                    key={asset.id}
-                  >
-                    <input
-                      type="radio"
-                      name="logoAsset"
-                      checked={selectedLogoAssetId === asset.id}
-                      onChange={() => selectLogoAsset(asset.id)}
-                    />
-                    <span className="logo-option__preview">
-                      <img src={asset.url} alt="" />
-                    </span>
-                    <span className="logo-option__label">{asset.label}</span>
+          {templateControls.logoStyle ? (
+            <section className="control-group" aria-labelledby="logo-style-title">
+              <h2 id="logo-style-title">品牌图标</h2>
+              {brandLogoSource ? (
+                <div className="logo-picker">
+                  {brandLogoSource.assets.map((asset) => (
+                    <label
+                      className={`logo-option ${selectedLogoAssetId === asset.id ? 'logo-option--active' : ''}`}
+                      key={asset.id}
+                    >
+                      <input
+                        type="radio"
+                        name="logoAsset"
+                        checked={selectedLogoAssetId === asset.id}
+                        onChange={() => selectLogoAsset(asset.id)}
+                      />
+                      <span className="logo-option__preview">
+                        <img src={asset.url} alt="" />
+                      </span>
+                      <span className="logo-option__label">{asset.label}</span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p className="control-note">当前 Logo 未匹配到可预览的品牌图标。</p>
+              )}
+              {brandLogoSource ? (
+                <label className="range-field logo-scale-field">
+                  <span>大小缩放</span>
+                  <input
+                    type="range"
+                    min="0.4"
+                    max="2"
+                    step="0.05"
+                    value={logoScale}
+                    onChange={(event) => updateLogoScale(Number(event.target.value))}
+                  />
+                  <output>{logoScale.toFixed(2)}x</output>
+                </label>
+              ) : null}
+            </section>
+          ) : null}
+
+          {visibleMetaFields.length ? (
+            <section className="control-group" aria-labelledby="meta-title">
+              <h2 id="meta-title">边框文字</h2>
+              <div className="field-grid">
+                {hasMetaField(visibleMetaFields, 'logo') ? (
+                  <label>
+                    Logo
+                    <select
+                      value={brandOptions.includes(meta.logo) ? meta.logo : ''}
+                      onChange={(event) => selectLogo(event.target.value)}
+                    >
+                      <option value="">自定义 Logo</option>
+                      {brandOptions.map((brand) => (
+                        <option value={brand} key={brand}>
+                          {brand}
+                        </option>
+                      ))}
+                    </select>
+                    <input value={meta.logo} onChange={(event) => updateMeta('logo', event.target.value)} />
                   </label>
-                ))}
+                ) : null}
+                {hasMetaField(visibleMetaFields, 'maker') ? (
+                  <label>
+                    品牌
+                    <select
+                      value={brandOptions.includes(meta.maker) ? meta.maker : ''}
+                      onChange={(event) => selectBrand(event.target.value)}
+                    >
+                      <option value="">自定义品牌</option>
+                      {brandOptions.map((brand) => (
+                        <option value={brand} key={brand}>
+                          {brand}
+                        </option>
+                      ))}
+                    </select>
+                    <input value={meta.maker} onChange={(event) => updateMeta('maker', event.target.value)} />
+                  </label>
+                ) : null}
+                {hasMetaField(visibleMetaFields, 'device') ? (
+                  <label>
+                    设备名称
+                    <input value={meta.device} onChange={(event) => updateMeta('device', event.target.value)} />
+                  </label>
+                ) : null}
+                {hasMetaField(visibleMetaFields, 'params') ? (
+                  <label className="field-grid__wide">
+                    参数
+                    <input value={meta.params} onChange={(event) => updateMeta('params', event.target.value)} />
+                  </label>
+                ) : null}
+                {hasMetaField(visibleMetaFields, 'date') ? (
+                  <label className="field-grid__wide">
+                    时间
+                    <input value={meta.date} onChange={(event) => updateMeta('date', event.target.value)} />
+                  </label>
+                ) : null}
               </div>
-            ) : (
-              <p className="control-note">当前 Logo 未匹配到可预览的品牌图标。</p>
-            )}
-            {brandLogoSource ? (
-              <label className="range-field logo-scale-field">
-                <span>大小缩放</span>
+            </section>
+          ) : null}
+
+          {templateControls.borderWidth ? (
+            <section className="control-group" aria-labelledby="border-title">
+              <h2 id="border-title">边框宽度</h2>
+              <label className="range-field">
                 <input
                   type="range"
-                  min="0.4"
-                  max="2"
-                  step="0.05"
-                  value={logoScale}
-                  onChange={(event) => updateLogoScale(Number(event.target.value))}
+                  min="80"
+                  max="220"
+                  step="4"
+                  value={borderWidth}
+                  onChange={(event) => setBorderWidth(Number(event.target.value))}
                 />
-                <output>{logoScale.toFixed(2)}x</output>
+                <span>{borderWidth}px</span>
               </label>
-            ) : null}
-          </section>
+            </section>
+          ) : null}
 
-          <section className="control-group" aria-labelledby="meta-title">
-            <h2 id="meta-title">边框文字</h2>
-            <div className="field-grid">
-              <label>
-                Logo
-                <select
-                  value={brandOptions.includes(meta.logo) ? meta.logo : ''}
-                  onChange={(event) => selectLogo(event.target.value)}
-                >
-                  <option value="">自定义 Logo</option>
-                  {brandOptions.map((brand) => (
-                    <option value={brand} key={brand}>
-                      {brand}
-                    </option>
-                  ))}
-                </select>
-                <input value={meta.logo} onChange={(event) => updateMeta('logo', event.target.value)} />
-              </label>
-              <label>
-                品牌
-                <select
-                  value={brandOptions.includes(meta.maker) ? meta.maker : ''}
-                  onChange={(event) => selectBrand(event.target.value)}
-                >
-                  <option value="">自定义品牌</option>
-                  {brandOptions.map((brand) => (
-                    <option value={brand} key={brand}>
-                      {brand}
-                    </option>
-                  ))}
-                </select>
-                <input value={meta.maker} onChange={(event) => updateMeta('maker', event.target.value)} />
-              </label>
-              <label>
-                设备名称
-                <input value={meta.device} onChange={(event) => updateMeta('device', event.target.value)} />
-              </label>
-              <label className="field-grid__wide">
-                参数
-                <input value={meta.params} onChange={(event) => updateMeta('params', event.target.value)} />
-              </label>
-              <label className="field-grid__wide">
-                时间
-                <input value={meta.date} onChange={(event) => updateMeta('date', event.target.value)} />
-              </label>
-            </div>
-          </section>
+          {templateControls.adjustments?.length ? (
+            <section className="control-group" aria-labelledby="template-adjustments-title">
+              <h2 id="template-adjustments-title">模板设置</h2>
+              {templateControls.adjustments.map((adjustment) => {
+                const value = getTemplateAdjustmentValue(selectedTemplateAdjustments, adjustment)
 
-          <section className="control-group" aria-labelledby="border-title">
-            <h2 id="border-title">边框宽度</h2>
-            <label className="range-field">
-              <input
-                type="range"
-                min="80"
-                max="220"
-                step="4"
-                value={borderWidth}
-                onChange={(event) => setBorderWidth(Number(event.target.value))}
-              />
-              <span>{borderWidth}px</span>
-            </label>
-          </section>
+                return (
+                  <label className="range-field template-adjustment-field" key={adjustment.id}>
+                    <span>{adjustment.label}</span>
+                    <input
+                      type="range"
+                      min={adjustment.min}
+                      max={adjustment.max}
+                      step={adjustment.step}
+                      value={value}
+                      onChange={(event) => updateTemplateAdjustment(adjustment.id, Number(event.target.value))}
+                    />
+                    <output>{formatTemplateAdjustmentValue(value, adjustment.unit)}</output>
+                  </label>
+                )
+              })}
+            </section>
+          ) : null}
 
           <div className="export-actions">
             <button className="export-button" type="button" disabled={!selectedPhoto || isExporting} onClick={exportImage}>
@@ -514,16 +578,27 @@ function getTemplateExampleUrl(templateId: TemplateId) {
 
 function getExportCanvasWidth(
   image: HTMLImageElement,
-  template: TemplateId,
+  template: TemplateDefinition,
   borderWidth: number,
+  adjustments: Record<string, number>,
   outputScale: number,
 ) {
-  if (template === 'blur-frame') {
-    const margin = Math.round(borderWidth * outputScale * (92 / 132))
-    return image.naturalWidth + margin * 2
-  }
+  return template.getCanvasWidth?.(image, { adjustments, borderWidth, outputScale }) ?? image.naturalWidth
+}
 
-  return image.naturalWidth
+function hasMetaField(fields: Array<keyof PhotoMeta>, field: keyof PhotoMeta) {
+  return fields.includes(field)
+}
+
+function getTemplateAdjustmentValue(
+  values: Record<string, number>,
+  adjustment: TemplateAdjustmentControl,
+) {
+  return values[adjustment.id] ?? adjustment.defaultValue
+}
+
+function formatTemplateAdjustmentValue(value: number, unit?: string) {
+  return unit ? `${value}${unit}` : String(value)
 }
 
 function delay(ms: number) {

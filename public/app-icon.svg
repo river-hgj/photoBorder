@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Photo Border app icon">
+  <defs>
+    <linearGradient id="bg" x1="72" x2="440" y1="48" y2="464" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2b3331"/>
+      <stop offset="0.52" stop-color="#111716"/>
+      <stop offset="1" stop-color="#050807"/>
+    </linearGradient>
+    <linearGradient id="photo" x1="130" x2="382" y1="116" y2="344" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8f7f1"/>
+      <stop offset="1" stop-color="#d9ddd7"/>
+    </linearGradient>
+    <linearGradient id="image" x1="150" x2="362" y1="136" y2="250" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#566d71"/>
+      <stop offset="0.48" stop-color="#203434"/>
+      <stop offset="1" stop-color="#101818"/>
+    </linearGradient>
+    <linearGradient id="lens" x1="202" x2="310" y1="150" y2="258" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#eff7f2"/>
+      <stop offset="0.22" stop-color="#8ea8a6"/>
+      <stop offset="0.56" stop-color="#172221"/>
+      <stop offset="1" stop-color="#050807"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="20" stdDeviation="20" flood-color="#000" flood-opacity="0.38"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path fill="#ffffff" fill-opacity="0.08" d="M80 136c48-54 128-74 202-42 78 34 104 10 150 6v316H80z"/>
+  <path fill="#c7efe3" fill-opacity="0.12" d="M84 394c68-22 107-8 158 13 68 28 113 17 186-42v58H84z"/>
+
+  <g filter="url(#shadow)">
+    <rect x="106" y="94" width="300" height="322" rx="38" fill="url(#photo)" transform="rotate(-6 256 255)"/>
+    <rect x="126" y="112" width="260" height="286" rx="28" fill="#111716" transform="rotate(-6 256 255)"/>
+    <rect x="116" y="86" width="300" height="322" rx="38" fill="url(#photo)" transform="rotate(4 256 255)"/>
+    <rect x="138" y="112" width="256" height="278" rx="26" fill="#101615" transform="rotate(4 256 255)"/>
+    <rect x="126" y="104" width="280" height="304" rx="36" fill="url(#photo)"/>
+    <rect x="150" y="128" width="232" height="150" rx="24" fill="url(#image)"/>
+    <path fill="#83b3a9" fill-opacity="0.55" d="M150 228l58-52 52 42 34-28 88 70v18H150z"/>
+    <rect x="150" y="294" width="232" height="88" rx="20" fill="#f7f6ef"/>
+    <rect x="176" y="320" width="108" height="11" rx="5.5" fill="#141a19"/>
+    <rect x="176" y="346" width="158" height="11" rx="5.5" fill="#141a19" opacity="0.72"/>
+    <circle cx="352" cy="326" r="12" fill="#141a19"/>
+    <circle cx="352" cy="358" r="12" fill="#141a19" opacity="0.72"/>
+  </g>
+
+  <g>
+    <circle cx="256" cy="203" r="76" fill="#0b100f"/>
+    <circle cx="256" cy="203" r="61" fill="url(#lens)" stroke="#f8f7f1" stroke-width="10"/>
+    <circle cx="256" cy="203" r="33" fill="#0b100f" stroke="#7f9994" stroke-width="5"/>
+    <path fill="none" stroke="#f8f7f1" stroke-linecap="round" stroke-width="8" d="M229 171a41 41 0 0 1 55 7"/>
+    <circle cx="232" cy="174" r="12" fill="#fff"/>
+    <circle cx="285" cy="225" r="10" fill="#fff"/>
+  </g>
+</svg>

@@ -1,5 +1,5 @@
 const CACHE_NAME = 'photo-border-v3'
-const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest', '/favicon.png', '/icon-192.png', '/icon-512.png']
+const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest', '/app-icon.png', '/icon-192.png', '/icon-512.png']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

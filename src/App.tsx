@@ -9,7 +9,7 @@ import { parseExif } from './lib/exif'
 import { addExifToJpeg } from './lib/exifWriter'
 import { loadImage } from './lib/image'
 import { templates } from './templates'
-import type { BrandLogoImages, BrandLogoSource, LogoVariant, PhotoMeta, TemplateId } from './types'
+import type { BrandLogoImages, BrandLogoSource, PhotoMeta, TemplateId } from './types'
 import './App.css'
 
 type PhotoItem = {
@@ -29,7 +29,8 @@ function App() {
   const [previewImage, setPreviewImage] = useState<HTMLImageElement | null>(null)
   const [isExporting, setIsExporting] = useState(false)
   const [exportProgress, setExportProgress] = useState('')
-  const [logoVariant, setLogoVariant] = useState<LogoVariant>('color')
+  const [selectedLogoAssetIds, setSelectedLogoAssetIds] = useState<Record<string, string>>({})
+  const [brandLogoScales, setBrandLogoScales] = useState<Record<string, number>>({})
   const [brandLogoImages, setBrandLogoImages] = useState<BrandLogoImages>({})
   const inputRef = useRef<HTMLInputElement>(null)
   const photosRef = useRef<PhotoItem[]>([])
@@ -91,16 +92,19 @@ function App() {
       isCurrent = false
     }
   }, [brandLogoSource])
+  const selectedLogoAssetId = getSelectedLogoAssetId(brandLogoSource, selectedLogoAssetIds)
+  const logoScale = getBrandLogoScale(brandLogoSource, brandLogoScales)
 
   const logo = useMemo(
     () => ({
       source: brandLogoSource,
       images: brandLogoImages,
-      variant: logoVariant,
+      selectedAssetId: selectedLogoAssetId,
+      scale: logoScale,
       brandColor: brandLogoSource?.brandColor,
       lightSurfaceColor: readableBrandColor(brandLogoSource?.brandColor),
     }),
-    [brandLogoImages, brandLogoSource, logoVariant],
+    [brandLogoImages, brandLogoSource, logoScale, selectedLogoAssetId],
   )
   const templateRenderProps = useMemo(
     () => ({ meta, logo, borderWidth }),
@@ -167,6 +171,24 @@ function App() {
     }))
   }
 
+  function selectLogoAsset(assetId: string) {
+    if (!brandLogoSource) return
+
+    setSelectedLogoAssetIds((current) => ({
+      ...current,
+      [brandLogoSource.id]: assetId,
+    }))
+  }
+
+  function updateLogoScale(value: number) {
+    if (!brandLogoSource) return
+
+    setBrandLogoScales((current) => ({
+      ...current,
+      [brandLogoSource.id]: value,
+    }))
+  }
+
   async function exportImage() {
     if (!selectedPhoto) return
 
@@ -206,7 +228,8 @@ function App() {
     const photoLogo = {
       source: photoBrandLogoSource,
       images: await loadBrandLogoImages(photoBrandLogoSource),
-      variant: logoVariant,
+      selectedAssetId: getSelectedLogoAssetId(photoBrandLogoSource, selectedLogoAssetIds),
+      scale: getBrandLogoScale(photoBrandLogoSource, brandLogoScales),
       brandColor: photoBrandLogoSource?.brandColor,
       lightSurfaceColor: readableBrandColor(photoBrandLogoSource?.brandColor),
     }
@@ -309,6 +332,47 @@ function App() {
             </div>
           </section>
 
+          <section className="control-group" aria-labelledby="logo-style-title">
+            <h2 id="logo-style-title">品牌图标</h2>
+            {brandLogoSource ? (
+              <div className="logo-picker">
+                {brandLogoSource.assets.map((asset) => (
+                  <label
+                    className={`logo-option ${selectedLogoAssetId === asset.id ? 'logo-option--active' : ''}`}
+                    key={asset.id}
+                  >
+                    <input
+                      type="radio"
+                      name="logoAsset"
+                      checked={selectedLogoAssetId === asset.id}
+                      onChange={() => selectLogoAsset(asset.id)}
+                    />
+                    <span className="logo-option__preview">
+                      <img src={asset.url} alt="" />
+                    </span>
+                    <span className="logo-option__label">{asset.label}</span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <p className="control-note">当前 Logo 未匹配到可预览的品牌图标。</p>
+            )}
+            {brandLogoSource ? (
+              <label className="range-field logo-scale-field">
+                <span>大小缩放</span>
+                <input
+                  type="range"
+                  min="0.4"
+                  max="2"
+                  step="0.05"
+                  value={logoScale}
+                  onChange={(event) => updateLogoScale(Number(event.target.value))}
+                />
+                <output>{logoScale.toFixed(2)}x</output>
+              </label>
+            ) : null}
+          </section>
+
           <section className="control-group" aria-labelledby="meta-title">
             <h2 id="meta-title">边框文字</h2>
             <div className="field-grid">
@@ -353,32 +417,6 @@ function App() {
               <label className="field-grid__wide">
                 时间
                 <input value={meta.date} onChange={(event) => updateMeta('date', event.target.value)} />
-              </label>
-            </div>
-          </section>
-
-          <section className="control-group" aria-labelledby="logo-style-title">
-            <h2 id="logo-style-title">图标样式</h2>
-            <div className="segmented-control">
-              <label className={logoVariant === 'color' ? 'segmented-control__item--active' : ''}>
-                <input
-                  type="radio"
-                  name="logoVariant"
-                  value="color"
-                  checked={logoVariant === 'color'}
-                  onChange={() => setLogoVariant('color')}
-                />
-                彩色
-              </label>
-              <label className={logoVariant === 'mono' ? 'segmented-control__item--active' : ''}>
-                <input
-                  type="radio"
-                  name="logoVariant"
-                  value="mono"
-                  checked={logoVariant === 'mono'}
-                  onChange={() => setLogoVariant('mono')}
-                />
-                单色
               </label>
             </div>
           </section>
@@ -442,11 +480,9 @@ async function loadBrandLogoImages(source: BrandLogoSource | undefined) {
   if (!source) return {}
 
   const entries = await Promise.all(
-    Object.entries(source.assets).map(async ([key, url]) => {
-      if (!url) return undefined
-
+    source.assets.map(async (asset) => {
       try {
-        return [key, await loadImage(url)] as const
+        return [asset.id, await loadImage(asset.url)] as const
       } catch {
         return undefined
       }
@@ -454,6 +490,19 @@ async function loadBrandLogoImages(source: BrandLogoSource | undefined) {
   )
 
   return Object.fromEntries(entries.filter((entry) => entry !== undefined)) as BrandLogoImages
+}
+
+function getSelectedLogoAssetId(source: BrandLogoSource | undefined, selectedLogoAssetIds: Record<string, string>) {
+  if (!source) return undefined
+
+  const selectedAssetId = selectedLogoAssetIds[source.id]
+  return source.assets.some((asset) => asset.id === selectedAssetId) ? selectedAssetId : source.assets[0]?.id
+}
+
+function getBrandLogoScale(source: BrandLogoSource | undefined, brandLogoScales: Record<string, number>) {
+  if (!source) return 1
+
+  return brandLogoScales[source.id] ?? source.scale
 }
 
 function delay(ms: number) {

@@ -44,7 +44,7 @@ function drawExport(
   context.drawImage(image, photoRect.x, photoRect.y, photoRect.width, photoRect.height)
   context.restore()
 
-  const logoSize = logo.source?.id === 'nikon' ? 58 : 46
+  const logoSize = 46
   const gap = 24
   const rowCenterY = photoRect.y + photoRect.height + margin / 2
   const logoFont = '700 42px Georgia, serif'

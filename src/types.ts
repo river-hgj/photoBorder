@@ -1,5 +1,4 @@
 export type TemplateId = 'blur-frame' | 'white-bottom'
-export type LogoVariant = 'color' | 'mono'
 
 export type PhotoMeta = {
   logo: string
@@ -9,30 +8,28 @@ export type PhotoMeta = {
   date: string
 }
 
-export type BrandLogoAssets = {
-  color?: string
-  black?: string
-  white?: string
+export type BrandLogoAsset = {
+  id: string
+  label: string
+  url: string
 }
 
 export type BrandLogoSource = {
   id: string
   name: string
   aliases: string[]
-  assets: BrandLogoAssets
+  scale: number
+  assets: BrandLogoAsset[]
   brandColor?: string
 }
 
-export type BrandLogoImages = {
-  color?: HTMLImageElement
-  black?: HTMLImageElement
-  white?: HTMLImageElement
-}
+export type BrandLogoImages = Record<string, HTMLImageElement>
 
 export type BrandLogoData = {
   source?: BrandLogoSource
   images?: BrandLogoImages
-  variant: LogoVariant
+  selectedAssetId?: string
+  scale?: number
   brandColor?: string
   lightSurfaceColor?: string
 }

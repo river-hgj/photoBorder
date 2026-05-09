@@ -147,31 +147,57 @@
 }
 
 .template-card {
+  position: relative;
   display: grid;
   grid-template-columns: 18px 1fr;
+  align-content: end;
   gap: 5px 10px;
-  padding: 13px;
+  min-height: 132px;
+  padding: 14px;
   border: 1px solid #d9dce3;
   border-radius: 8px;
-  background: #fff;
+  overflow: hidden;
+  background-color: #151719;
+  background-position: center bottom;
+  background-size: cover;
+  color: #fff;
   cursor: pointer;
 }
 
+.template-card::before {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(12, 15, 16, 0.02), rgba(12, 15, 16, 0.68));
+  content: '';
+}
+
 .template-card input {
+  position: relative;
   grid-row: span 2;
   margin: 3px 0 0;
   accent-color: #14161a;
+  z-index: 1;
 }
 
 .template-card span {
-  color: #17191d;
+  position: relative;
+  z-index: 1;
+  color: #fff;
   font-size: 14px;
   font-weight: 700;
 }
 
+.template-card small {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.78);
+}
+
 .template-card--active {
   border-color: #16181d;
-  box-shadow: 0 0 0 1px #16181d inset;
+  box-shadow:
+    0 0 0 2px #16181d inset,
+    0 8px 24px rgba(20, 22, 26, 0.14);
 }
 
 .photo-list {

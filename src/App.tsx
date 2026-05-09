@@ -318,6 +318,7 @@ function App() {
                 <label
                   className={`template-card ${template === item.id ? 'template-card--active' : ''}`}
                   key={item.id}
+                  style={{ backgroundImage: `url(${getTemplateExampleUrl(item.id)})` }}
                 >
                   <input
                     type="radio"
@@ -503,6 +504,10 @@ function getBrandLogoScale(source: BrandLogoSource | undefined, brandLogoScales:
   if (!source) return 1
 
   return brandLogoScales[source.id] ?? source.scale
+}
+
+function getTemplateExampleUrl(templateId: TemplateId) {
+  return `/example/example-${templateId}.jpg`
 }
 
 function delay(ms: number) {

@@ -48,3 +48,5 @@ Pull requests should include a clear summary, screenshots or exported sample ima
 ## Architecture Notes
 
 Template previews are Canvas-based by design. Do not reintroduce DOM/CSS overlays for the photo output unless the export path is updated to use the same rendering source.
+
+@RTK.md

@@ -1,0 +1,56 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "/Users/pylogmon/.ohos/config/default_photoBorder_vE8ZRWL5_gXKjccYuCTNTcPFg06jFfj0P-HL114rMZQ=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001B3593D4A049F787EC5484BCA00B3F7FDF1A37B00C1FC494E3DC86BDC1F6B5355B1E9ACDBDE1021B",
+          "profile": "/Users/pylogmon/.ohos/config/default_photoBorder_vE8ZRWL5_gXKjccYuCTNTcPFg06jFfj0P-HL114rMZQ=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "/Users/pylogmon/.ohos/config/default_photoBorder_vE8ZRWL5_gXKjccYuCTNTcPFg06jFfj0P-HL114rMZQ=.p12",
+          "storePassword": "0000001B35054590D88C3619CDF5F86B8BD11359CFA1A86D9A7D8A21F6E013421BD216344B42510E884E74"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "targetSdkVersion": "6.1.0(23)",
+        "compatibleSdkVersion": "6.1.0(23)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug",
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}

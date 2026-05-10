@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "为照片生成带设备信息边框的成片"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "为照片生成带设备信息边框的成片"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Photo Border"
+    }
+  ]
+}

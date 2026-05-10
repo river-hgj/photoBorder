@@ -13,6 +13,7 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), isHarmony && harmonyRawfileHtml()],
     build: isHarmony
       ? {
+          outDir: 'harmony/entry/src/main/resources/rawfile',
           modulePreload: false,
           cssCodeSplit: false,
           rollupOptions: {

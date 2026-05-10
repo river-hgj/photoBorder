@@ -56,10 +56,23 @@ function drawExport(
   context.drawImage(image, photoX, photoY, photoWidth, photoHeight)
   context.restore()
 
-  const metricsCenterX = canvas.width * 0.235
+  const metricsCenterX = photoX / 2
   const logoSize = 72 * outputScale
-  const logoTop = canvas.height * 0.21
   const logoFont = `700 ${62 * outputScale}px Georgia, serif`
+  const brandFontSize = 12 * outputScale
+  const brandTextGap = 18 * outputScale
+  const brandTextHeight = brandFontSize * 1.35
+  const rows = getExposureRows(meta.params)
+  const rowGap = 82 * outputScale
+  const metricRowHeight = 42 * outputScale
+  const logoToRowsGap = 82 * outputScale
+  const logoBlockHeight = logoSize + brandTextGap + brandTextHeight
+  const metricsBlockHeight = metricRowHeight + rowGap * (rows.length - 1)
+  const contentHeight = logoBlockHeight + logoToRowsGap + metricsBlockHeight
+  const contentTop = (canvas.height - contentHeight) / 2
+  const logoTop = contentTop
+  const brandTextY = logoTop + logoSize + brandTextGap
+  const rowStartY = contentTop + logoBlockHeight + logoToRowsGap + metricRowHeight / 2
 
   drawCanvasBrandLogo(
     context,
@@ -74,15 +87,12 @@ function drawExport(
   )
 
   context.fillStyle = 'rgba(255, 255, 255, 0.78)'
-  context.font = `700 ${12 * outputScale}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`
+  context.font = `700 ${brandFontSize}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`
   context.textAlign = 'center'
   context.letterSpacing = `${3 * outputScale}px`
-  context.fillText(meta.logo.toUpperCase(), metricsCenterX, logoTop + logoSize + 18 * outputScale)
+  context.fillText(meta.logo.toUpperCase(), metricsCenterX, brandTextY)
   context.letterSpacing = '0px'
 
-  const rows = getExposureRows(meta.params)
-  const rowStartY = canvas.height * 0.47
-  const rowGap = 82 * outputScale
   const valueFont = `400 ${25 * outputScale}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`
   context.save()
   context.font = valueFont

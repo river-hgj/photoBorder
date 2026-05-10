@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "/Users/pylogmon/.ohos/config/default_photoBorder_vE8ZRWL5_gXKjccYuCTNTcPFg06jFfj0P-HL114rMZQ=.cer",
-          "keyAlias": "debugKey",
-          "keyPassword": "0000001B3593D4A049F787EC5484BCA00B3F7FDF1A37B00C1FC494E3DC86BDC1F6B5355B1E9ACDBDE1021B",
-          "profile": "/Users/pylogmon/.ohos/config/default_photoBorder_vE8ZRWL5_gXKjccYuCTNTcPFg06jFfj0P-HL114rMZQ=.p7b",
+          "storeFile": "/Users/pylogmon/Downloads/photoBorder.p12",
+          "storePassword": "0000001C7165086C7D8F5B72026CC85CBFB3973A39751B25DF5850291619F09C7EB888F69C15AB847A043F0D",
+          "keyAlias": "photoBorder",
+          "keyPassword": "0000001C751034EC9E062BFE3267A7DEE2C029BE84F2B2624E95C84D2A2E7DC23C0C2ACFF5BFEE42B61E9CA8",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "/Users/pylogmon/.ohos/config/default_photoBorder_vE8ZRWL5_gXKjccYuCTNTcPFg06jFfj0P-HL114rMZQ=.p12",
-          "storePassword": "0000001B35054590D88C3619CDF5F86B8BD11359CFA1A86D9A7D8A21F6E013421BD216344B42510E884E74"
+          "profile": "/Users/pylogmon/Downloads/photoBorderRelease.p7b",
+          "certpath": "/Users/pylogmon/Downloads/photoBorder.cer"
         }
       }
     ],

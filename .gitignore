@@ -24,11 +24,11 @@ dist-ssr
 *.sw?
 
 /node_modules
-/oh_modules
+oh_modules
 /local.properties
 /.idea
 **/build
-/.hvigor
+.hvigor
 .cxx
 /.clangd
 /.clang-format

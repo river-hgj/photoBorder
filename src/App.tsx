@@ -603,7 +603,7 @@ function getBrandLogoScale(source: BrandLogoSource | undefined, brandLogoScales:
 }
 
 function getTemplateExampleUrl(templateId: TemplateId) {
-  return `/example/example-${templateId}.jpg`
+  return `${import.meta.env.BASE_URL}example/example-${templateId}.jpg`
 }
 
 function getExportCanvasWidth(

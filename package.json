@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:harmony": "tsc -b && vite build --mode harmony",
     "lint": "eslint .",
     "preview": "vite preview"
   },

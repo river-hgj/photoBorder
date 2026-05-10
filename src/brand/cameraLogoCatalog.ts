@@ -1,6 +1,7 @@
 import type { BrandLogoAsset, BrandLogoSource } from '../types'
 
-const logoPath = (fileName: string) => `/camera-logos/${encodeURIComponent(fileName)}`
+const publicAssetUrl = (path: string) => `${import.meta.env.BASE_URL}${path}`
+const logoPath = (fileName: string) => publicAssetUrl(`camera-logos/${encodeURIComponent(fileName)}`)
 
 function assets(fileNames: string[]): BrandLogoAsset[] {
   return fileNames.map((fileName) => ({

@@ -1,11 +1,11 @@
 export function registerServiceWorker() {
-  if (!('serviceWorker' in navigator) || !import.meta.env.PROD) {
+  if (__HARMONY_RAWFILE__ || !('serviceWorker' in navigator) || !import.meta.env.PROD) {
     return
   }
 
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js')
+      const registration = await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`)
       await navigator.serviceWorker.ready
       cacheLoadedAssets(registration)
     } catch (error: unknown) {
@@ -25,6 +25,6 @@ function cacheLoadedAssets(registration: ServiceWorkerRegistration) {
 
   registration.active?.postMessage({
     type: 'CACHE_URLS',
-    urls: [...new Set(['/', '/index.html', ...urls])],
+    urls: [...new Set([import.meta.env.BASE_URL, `${import.meta.env.BASE_URL}index.html`, ...urls])],
   })
 }

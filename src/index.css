@@ -17,6 +17,29 @@
 body {
   margin: 0;
   min-width: 320px;
+  height: 100%;
+  overflow: hidden;
+}
+
+html,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+@media (max-width: 1180px) {
+  body {
+    height: auto;
+    min-height: 100svh;
+    overflow: auto;
+  }
+
+  html,
+  #root {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+  }
 }
 
 button,

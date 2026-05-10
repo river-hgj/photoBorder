@@ -1,16 +1,21 @@
 .app-shell {
-  min-height: 100svh;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100svh;
   padding: clamp(12px, 2.4vw, 32px);
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .workbench {
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(340px, 28vw, 420px);
   gap: clamp(14px, 2vw, 28px);
-  max-width: 1440px;
-  margin: 0 auto;
-  min-height: calc(100svh - clamp(24px, 4.8vw, 64px));
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .preview-stage {
@@ -18,6 +23,7 @@
   place-items: center;
   min-width: 0;
   min-height: 0;
+  height: 100%;
   border: 1px solid var(--line);
   background:
     linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
@@ -40,6 +46,7 @@
   display: block;
   height: auto;
   max-height: calc(100svh - clamp(80px, 9vw, 128px));
+  max-width: 100%;
   object-fit: contain;
 }
 
@@ -79,8 +86,10 @@
   display: flex;
   flex-direction: column;
   gap: clamp(16px, 1.8vw, 22px);
+  min-width: 0;
   min-height: 0;
-  max-height: calc(100svh - clamp(24px, 4.8vw, 64px));
+  height: 100%;
+  max-height: 100%;
   padding: clamp(18px, 2vw, 28px);
   border: 1px solid var(--line);
   background: #ffffff;
@@ -144,8 +153,11 @@
 }
 
 .file-picker {
+  position: relative;
   display: grid;
+  align-content: center;
   gap: 6px;
+  min-height: 68px;
   padding: 16px;
   border: 1px solid #d9dce3;
   border-radius: 8px;
@@ -155,18 +167,28 @@
 
 .file-picker input {
   position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
   opacity: 0;
   pointer-events: none;
 }
 
 .file-picker span {
+  position: relative;
+  z-index: 1;
   color: #101216;
   font-size: 16px;
   font-weight: 700;
+  line-height: 1.25;
 }
 
 .file-picker small,
 .template-card small {
+  position: relative;
+  z-index: 1;
   color: #7d8390;
   font-size: 12px;
   line-height: 1.45;
@@ -345,6 +367,7 @@
 }
 
 .logo-option {
+  position: relative;
   display: grid;
   gap: 8px;
   min-width: 0;
@@ -353,12 +376,17 @@
   border-radius: 8px;
   background: #fff;
   cursor: pointer;
+  overflow: hidden;
 }
 
 .logo-option input {
   position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   opacity: 0;
-  pointer-events: none;
+  cursor: pointer;
 }
 
 .logo-option--active {
@@ -493,9 +521,19 @@
 }
 
 @media (max-width: 1180px) {
+  .app-shell {
+    position: static;
+    inset: auto;
+    height: auto;
+    min-height: 100svh;
+    overflow: visible;
+  }
+
   .workbench {
     grid-template-columns: 1fr;
+    height: auto;
     min-height: auto;
+    overflow: visible;
   }
 
   .preview-stage {
@@ -510,6 +548,7 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
+    height: auto;
     max-height: none;
     overflow: visible;
   }

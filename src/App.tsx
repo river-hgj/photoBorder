@@ -56,6 +56,22 @@ function App() {
   }, [photos])
 
   useEffect(() => {
+    const keepDesktopViewportPinned = () => {
+      if (window.matchMedia('(max-width: 1180px)').matches) return
+      if (window.scrollX === 0 && window.scrollY === 0) return
+
+      window.requestAnimationFrame(() => window.scrollTo(0, 0))
+    }
+
+    keepDesktopViewportPinned()
+    window.addEventListener('scroll', keepDesktopViewportPinned, { passive: true })
+
+    return () => {
+      window.removeEventListener('scroll', keepDesktopViewportPinned)
+    }
+  }, [])
+
+  useEffect(() => {
     return () => {
       photosRef.current.forEach((photo) => URL.revokeObjectURL(photo.url))
     }

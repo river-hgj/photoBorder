@@ -141,7 +141,7 @@ function buildExifSegment(meta: PhotoMeta) {
     params.iso ? shortEntry(0x8827, params.iso) : undefined,
     asciiEntry(0x9003, dateTime),
     asciiEntry(0x9004, dateTime),
-    params.focalLength ? rationalEntry(0x920a, params.focalLength) : undefined,
+    params.focalLength ? shortEntry(0xa405, params.focalLength) : undefined,
   ].filter((entry): entry is IfdEntry => Boolean(entry))
 
   const ifd0EntryCount = ifd0BaseEntries.length + 1

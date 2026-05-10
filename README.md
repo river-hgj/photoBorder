@@ -18,11 +18,11 @@
 - 支持导出当前照片或批量导出全部照片。
 - 预览和导出共用 Canvas 渲染逻辑，尽量保证所见即所得。
 
-## 当前模板
+## 模板示例
 
-- `纯白铭牌`：适合旅行、街拍和明亮照片，信息分区更清晰。
-- `柔焦光影框`：适合电影感和暗色照片，底部水平显示白色品牌图标与参数。
-- `光影侧栏`：适合氛围感和竖幅照片，左侧集中展示品牌图标与拍摄参数。
+| 纯白铭牌 | 柔焦光影框 | 光影侧栏 |
+| --- | --- | --- |
+| <img src="public/example/example-white-bottom.jpg" alt="纯白铭牌模板示例" width="240"> | <img src="public/example/example-blur-frame.jpg" alt="柔焦光影框模板示例" width="240"> | <img src="public/example/example-impression-frame.jpg" alt="光影侧栏模板示例" width="240"> |
 
 ## 技术栈
 

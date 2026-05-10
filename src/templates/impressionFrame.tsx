@@ -56,7 +56,7 @@ function drawExport(
   context.drawImage(image, photoX, photoY, photoWidth, photoHeight)
   context.restore()
 
-  const leftCenterX = canvas.width * 0.235
+  const metricsCenterX = canvas.width * 0.235
   const logoSize = 72 * outputScale
   const logoTop = canvas.height * 0.21
   const logoFont = `700 ${62 * outputScale}px Georgia, serif`
@@ -65,7 +65,7 @@ function drawExport(
     context,
     logo,
     meta.logo,
-    leftCenterX,
+    metricsCenterX,
     logoTop,
     logoSize,
     'center',
@@ -77,15 +77,20 @@ function drawExport(
   context.font = `700 ${12 * outputScale}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`
   context.textAlign = 'center'
   context.letterSpacing = `${3 * outputScale}px`
-  context.fillText(meta.logo.toUpperCase(), leftCenterX, logoTop + logoSize + 18 * outputScale)
+  context.fillText(meta.logo.toUpperCase(), metricsCenterX, logoTop + logoSize + 18 * outputScale)
   context.letterSpacing = '0px'
 
   const rows = getExposureRows(meta.params)
   const rowStartY = canvas.height * 0.47
   const rowGap = 82 * outputScale
+  const valueFont = `400 ${25 * outputScale}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`
+  context.save()
+  context.font = valueFont
+  const valueWidth = Math.max(...rows.map((row) => context.measureText(row.value).width))
+  context.restore()
   rows.forEach((row, index) => {
     const y = rowStartY + rowGap * index
-    drawMetricRow(context, row.label, row.value, leftCenterX, y, outputScale)
+    drawMetricRow(context, row.label, row.value, metricsCenterX, y, outputScale, valueWidth)
   })
 }
 
@@ -138,14 +143,18 @@ function drawMetricRow(
   context: CanvasRenderingContext2D,
   label: string,
   value: string,
-  centerX: number,
+  groupCenterX: number,
   centerY: number,
   outputScale: number,
+  valueWidth: number,
 ) {
   const badgeWidth = 80 * outputScale
   const badgeHeight = 42 * outputScale
-  const badgeX = centerX - 52 * outputScale
+  const valueGap = 36 * outputScale
+  const groupWidth = badgeWidth + valueGap + valueWidth
+  const badgeX = groupCenterX - groupWidth / 2
   const badgeY = centerY - badgeHeight / 2
+  const valueX = badgeX + badgeWidth + valueGap
 
   context.save()
   context.strokeStyle = 'rgba(255, 255, 255, 0.74)'
@@ -161,7 +170,7 @@ function drawMetricRow(
 
   context.font = `400 ${25 * outputScale}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`
   context.textAlign = 'left'
-  context.fillText(value, centerX + 34 * outputScale, centerY + outputScale)
+  context.fillText(value, valueX, centerY + outputScale)
   context.restore()
 }
 
@@ -184,7 +193,7 @@ function findIso(params: string) {
 }
 
 function findShutter(params: string) {
-  const match = params.match(/(\d+\s*\/\s*\d+|\d+(?:\.\d+)?\s*s)\b/i)
+  const match = params.match(/(?:^|[^\d/])(\d+\s*\/\s*\d+\s*s?|\d+(?:\.\d+)?\s*s)\b/i)
   return match?.[1]?.replace(/\s+/g, '')
 }
 

@@ -112,7 +112,7 @@ export const cameraLogoCatalog: BrandLogoSource[] = [
     name: 'Hasselblad',
     aliases: ['hasselblad'],
     scale: 1,
-    assets: assets(['hasselblad-Black.svg', 'hasselblad-White.svg']),
+    assets: assets(['hasselblad-Icon-Black.svg', 'hasselblad-Icon-White.svg', 'hasselblad-Black.svg', 'hasselblad-White.svg']),
   },
   {
     id: 'ricoh',

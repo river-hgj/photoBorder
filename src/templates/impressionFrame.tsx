@@ -106,7 +106,7 @@ function drawExport(
 
 export const impressionFrameTemplate: TemplateDefinition = {
   id: 'impression-frame',
-  name: '印象边框',
+  name: '光影侧栏',
   description: '适合氛围感和竖幅照片，左侧集中展示品牌图标与拍摄参数。',
   controls: {
     logoStyle: true,

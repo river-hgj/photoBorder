@@ -21,6 +21,7 @@ body {
   height: 100%;
   background: var(--app-background);
   overflow: hidden;
+  touch-action: pan-x pan-y;
 }
 
 html,
@@ -28,6 +29,7 @@ html,
   height: 100%;
   background: var(--app-background);
   overflow: hidden;
+  touch-action: pan-x pan-y;
 }
 
 @media (max-width: 1180px) {

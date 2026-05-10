@@ -1,91 +1,91 @@
+import exifr from 'exifr'
+
 import { defaultMeta } from '../data/defaults'
 import type { PhotoMeta } from '../types'
 
-function readAscii(view: DataView, offset: number, length: number) {
-  let output = ''
+type ExifTags = Record<string, unknown>
 
-  for (let index = 0; index < length; index += 1) {
-    const value = view.getUint8(offset + index)
-    if (value === 0) break
-    output += String.fromCharCode(value)
-  }
+const EXIF_FIELDS = [
+  'Make',
+  'Model',
+  'FocalLength',
+  'FocalLengthIn35mmFormat',
+  'FNumber',
+  'ExposureTime',
+  'ISO',
+  'ISOSpeedRatings',
+  'PhotographicSensitivity',
+  'DateTime',
+  'DateTimeOriginal',
+  'CreateDate',
+]
 
-  return output.trim()
+function firstValue(value: unknown) {
+  return Array.isArray(value) ? value[0] : value
 }
 
-function formatRational(value?: number) {
-  if (!value || !Number.isFinite(value)) return ''
+function stringFromExif(value: unknown) {
+  const normalized = firstValue(value)
 
-  if (value < 1) {
-    const denominator = Math.round(1 / value)
-    return `1/${denominator}s`
-  }
+  if (typeof normalized === 'string') return normalized.trim()
+  if (typeof normalized === 'number' && Number.isFinite(normalized)) return String(normalized)
 
-  return `${Math.round(value * 10) / 10}s`
+  return ''
 }
 
-function readExifValue(
-  view: DataView,
-  tiffStart: number,
-  entryOffset: number,
-  littleEndian: boolean,
-) {
-  const type = view.getUint16(entryOffset + 2, littleEndian)
-  const count = view.getUint32(entryOffset + 4, littleEndian)
-  const valueOffset = entryOffset + 8
-  const typeSize: Record<number, number> = {
-    1: 1,
-    2: 1,
-    3: 2,
-    4: 4,
-    5: 8,
-    7: 1,
-    9: 4,
-    10: 8,
-  }
-  const bytes = (typeSize[type] ?? 1) * count
-  const dataOffset =
-    bytes <= 4 ? valueOffset : tiffStart + view.getUint32(valueOffset, littleEndian)
+function numberFromExif(value: unknown) {
+  const normalized = firstValue(value)
 
-  if (dataOffset < 0 || dataOffset >= view.byteLength) return undefined
+  if (typeof normalized === 'number') return Number.isFinite(normalized) ? normalized : undefined
+  if (typeof normalized !== 'string') return undefined
 
-  if (type === 2) return readAscii(view, dataOffset, count)
-  if (type === 3) return view.getUint16(dataOffset, littleEndian)
-  if (type === 4) return view.getUint32(dataOffset, littleEndian)
+  const trimmed = normalized.trim()
+  const fractionMatch = trimmed.match(/^(-?\d+(?:\.\d+)?)\s*\/\s*(-?\d+(?:\.\d+)?)$/)
 
-  if (type === 5) {
-    const numerator = view.getUint32(dataOffset, littleEndian)
-    const denominator = view.getUint32(dataOffset + 4, littleEndian)
+  if (fractionMatch) {
+    const numerator = Number(fractionMatch[1])
+    const denominator = Number(fractionMatch[2])
     return denominator ? numerator / denominator : undefined
   }
 
-  return undefined
+  const parsed = Number(trimmed)
+  return Number.isFinite(parsed) ? parsed : undefined
 }
 
-function collectIfdTags(
-  view: DataView,
-  tiffStart: number,
-  ifdOffset: number,
-  littleEndian: boolean,
-) {
-  const tags = new Map<number, string | number>()
-  const absoluteOffset = tiffStart + ifdOffset
-  const count = view.getUint16(absoluteOffset, littleEndian)
+function padDatePart(value: number) {
+  return String(value).padStart(2, '0')
+}
 
-  for (let index = 0; index < count; index += 1) {
-    const entryOffset = absoluteOffset + 2 + index * 12
-    const tag = view.getUint16(entryOffset, littleEndian)
-    const value = readExifValue(view, tiffStart, entryOffset, littleEndian)
+function normalizeDate(value: unknown) {
+  const normalized = firstValue(value)
 
-    if (value !== undefined) tags.set(tag, value)
+  if (normalized instanceof Date && !Number.isNaN(normalized.getTime())) {
+    const year = normalized.getFullYear()
+    const month = padDatePart(normalized.getMonth() + 1)
+    const day = padDatePart(normalized.getDate())
+    const hours = padDatePart(normalized.getHours())
+    const minutes = padDatePart(normalized.getMinutes())
+    const seconds = padDatePart(normalized.getSeconds())
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
   }
 
-  return tags
+  if (typeof normalized !== 'string' || !normalized.trim()) return defaultMeta.date
+
+  return normalized.trim().replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')
 }
 
-function normalizeDate(value?: string | number) {
-  if (!value || typeof value !== 'string') return defaultMeta.date
-  return value.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')
+function formatExposure(value: unknown) {
+  const exposure = numberFromExif(value)
+
+  if (!exposure || !Number.isFinite(exposure)) return ''
+
+  if (exposure < 1) {
+    const denominator = Math.round(1 / exposure)
+    return `1/${denominator}s`
+  }
+
+  return `${Math.round(exposure * 10) / 10}s`
 }
 
 function brandFromMake(make?: string) {
@@ -102,57 +102,59 @@ function brandFromMake(make?: string) {
   return make?.trim() || defaultMeta.logo
 }
 
+function buildParams(tags: ExifTags) {
+  const focal =
+    numberFromExif(tags.FocalLengthIn35mmFormat) ?? numberFromExif(tags.FocalLength)
+  const fNumber = numberFromExif(tags.FNumber)
+  const iso =
+    numberFromExif(tags.ISO) ??
+    numberFromExif(tags.ISOSpeedRatings) ??
+    numberFromExif(tags.PhotographicSensitivity)
+
+  return [
+    focal ? `${Math.round(focal)}mm` : '',
+    fNumber ? `F${fNumber.toFixed(2)}` : '',
+    formatExposure(tags.ExposureTime),
+    iso ? `ISO${Math.round(iso)}` : '',
+  ]
+    .filter(Boolean)
+    .join('  ')
+}
+
 export async function parseExif(file: File): Promise<PhotoMeta> {
-  const buffer = await file.arrayBuffer()
-  const view = new DataView(buffer)
+  try {
+    const tags = (await exifr.parse(file, {
+      pick: EXIF_FIELDS,
+      tiff: true,
+      exif: true,
+      gps: false,
+      xmp: false,
+      icc: false,
+      iptc: false,
+      jfif: false,
+      ihdr: false,
+      mergeOutput: true,
+      translateKeys: true,
+      translateValues: true,
+      reviveValues: true,
+    })) as ExifTags | undefined
 
-  if (view.getUint16(0) !== 0xffd8) return defaultMeta
+    if (!tags) return defaultMeta
 
-  let offset = 2
+    const maker = stringFromExif(tags.Make) || defaultMeta.maker
+    const model = stringFromExif(tags.Model) || defaultMeta.device
+    const params = buildParams(tags) || defaultMeta.params
+    const date = normalizeDate(tags.DateTimeOriginal ?? tags.CreateDate ?? tags.DateTime)
 
-  while (offset < view.byteLength) {
-    if (view.getUint8(offset) !== 0xff) break
-
-    const marker = view.getUint8(offset + 1)
-    const segmentLength = view.getUint16(offset + 2)
-
-    if (marker === 0xe1 && readAscii(view, offset + 4, 6) === 'Exif') {
-      const tiffStart = offset + 10
-      const littleEndian = view.getUint16(tiffStart) === 0x4949
-      const ifd0Offset = view.getUint32(tiffStart + 4, littleEndian)
-      const ifd0 = collectIfdTags(view, tiffStart, ifd0Offset, littleEndian)
-      const exifPointer = ifd0.get(0x8769)
-      const exif =
-        typeof exifPointer === 'number'
-          ? collectIfdTags(view, tiffStart, exifPointer, littleEndian)
-          : new Map<number, string | number>()
-
-      const maker = String(ifd0.get(0x010f) ?? defaultMeta.maker).trim()
-      const model = String(ifd0.get(0x0110) ?? defaultMeta.device).trim()
-      const focal = Number(exif.get(0x920a))
-      const fNumber = Number(exif.get(0x829d))
-      const exposure = Number(exif.get(0x829a))
-      const iso = Number(exif.get(0x8827))
-      const params = [
-        focal ? `${Math.round(focal)}mm` : '',
-        fNumber ? `F${Math.round(fNumber * 10) / 10}` : '',
-        formatRational(exposure),
-        iso ? `ISO${iso}` : '',
-      ]
-        .filter(Boolean)
-        .join('  ')
-
-      return {
-        logo: brandFromMake(maker),
-        maker,
-        device: model,
-        params: params || defaultMeta.params,
-        date: normalizeDate(ifd0.get(0x0132) ?? exif.get(0x9003)),
-      }
+    return {
+      logo: brandFromMake(maker),
+      maker,
+      device: model,
+      params,
+      date,
     }
-
-    offset += 2 + segmentLength
+  } catch (error) {
+    console.warn('Failed to parse EXIF metadata', error)
+    return defaultMeta
   }
-
-  return defaultMeta
 }

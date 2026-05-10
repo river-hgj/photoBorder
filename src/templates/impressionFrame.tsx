@@ -97,7 +97,7 @@ function drawExport(
 export const impressionFrameTemplate: TemplateDefinition = {
   id: 'impression-frame',
   name: '印象边框',
-  description: '模糊背景搭配悬浮照片，左侧展示品牌 Logo、光圈、ISO 与快门。',
+  description: '适合氛围感和竖幅照片，左侧集中展示品牌图标与拍摄参数。',
   controls: {
     logoStyle: true,
     metaFields: ['logo', 'params'],

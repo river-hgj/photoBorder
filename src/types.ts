@@ -1,4 +1,4 @@
-export type TemplateId = 'blur-frame' | 'impression-frame' | 'watermark' | 'white-bottom'
+export type TemplateId = 'blur-frame' | 'impression-frame' | 'shadow-imprint' | 'watermark' | 'white-bottom'
 
 export type PhotoMeta = {
   logo: string

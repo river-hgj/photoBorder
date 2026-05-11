@@ -52,8 +52,8 @@ function drawExport(
 
 export const watermarkTemplate: TemplateDefinition = {
   id: 'watermark',
-  name: '水印叠加',
-  description: '水印叠加在照片底部，Logo 在上参数在下，可调节高度、间距和位置。',
+  name: '浮光水印',
+  description: '将 Logo 和参数轻盈叠放在照片底部，可调节水印高度、间距和位置。',
   controls: {
     logoStyle: true,
     metaFields: ['logo', 'params'],

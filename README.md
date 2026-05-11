@@ -20,9 +20,9 @@
 
 ## 模板示例
 
-| 纯白铭牌 | 柔焦光影框 | 光影侧栏 |
-| --- | --- | --- |
-| <img src="public/example/example-white-bottom.jpg" alt="纯白铭牌模板示例" width="240"> | <img src="public/example/example-blur-frame.jpg" alt="柔焦光影框模板示例" width="240"> | <img src="public/example/example-impression-frame.jpg" alt="光影侧栏模板示例" width="240"> |
+| 纯白铭牌 | 柔焦光影框 | 光影侧栏 | 浮光水印 |
+| --- | --- | --- | --- |
+| <img src="public/example/example-white-bottom.jpg" alt="纯白铭牌模板示例" width="240"> | <img src="public/example/example-blur-frame.jpg" alt="柔焦光影框模板示例" width="240"> | <img src="public/example/example-impression-frame.jpg" alt="光影侧栏模板示例" width="240"> | <img src="public/example/example-watermark.jpg" alt="浮光水印模板示例" width="240"> |
 
 ## 技术栈
 

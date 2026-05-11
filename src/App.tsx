@@ -44,6 +44,7 @@ function App() {
   const [brandLogoImages, setBrandLogoImages] = useState<BrandLogoImages>({})
   const inputRef = useRef<HTMLInputElement>(null)
   const photosRef = useRef<PhotoItem[]>([])
+  const uploadModeRef = useRef<'replace' | 'append'>('replace')
 
   const selectedPhoto = useMemo(
     () => photos.find((photo) => photo.id === selectedPhotoId) ?? photos[0],
@@ -150,7 +151,7 @@ function App() {
         const parsedMeta = await parseExif(file)
 
         return {
-          id: `${file.name}-${file.lastModified}-${file.size}-${index}`,
+          id: `${file.name}-${file.lastModified}-${file.size}-${Date.now()}-${index}`,
           url: URL.createObjectURL(file),
           fileName: file.name,
           file,
@@ -160,11 +161,18 @@ function App() {
       }),
     )
 
-    setPhotos((currentPhotos) => {
-      currentPhotos.forEach((photo) => URL.revokeObjectURL(photo.url))
-      return nextPhotos
-    })
-    setSelectedPhotoId(nextPhotos[0]?.id ?? '')
+    if (uploadModeRef.current === 'append') {
+      setPhotos((currentPhotos) => [...currentPhotos, ...nextPhotos])
+      setSelectedPhotoId((currentPhotoId) => currentPhotoId || nextPhotos[0]?.id || '')
+    } else {
+      setPhotos((currentPhotos) => {
+        currentPhotos.forEach((photo) => URL.revokeObjectURL(photo.url))
+        return nextPhotos
+      })
+      setSelectedPhotoId(nextPhotos[0]?.id ?? '')
+    }
+
+    uploadModeRef.current = 'replace'
     setPreviewImage(null)
     event.target.value = ''
   }
@@ -175,6 +183,25 @@ function App() {
     setPhotos((currentPhotos) =>
       currentPhotos.map((photo) => (photo.id === selectedPhoto.id ? updater(photo) : photo)),
     )
+  }
+
+  function removePhoto(photoId: string) {
+    const removedIndex = photos.findIndex((photo) => photo.id === photoId)
+
+    if (removedIndex === -1) return
+
+    const nextPhotos = photos.filter((photo) => photo.id !== photoId)
+    const removedPhoto = photos[removedIndex]
+
+    URL.revokeObjectURL(removedPhoto.url)
+    setPhotos(nextPhotos)
+
+    if (selectedPhoto?.id === photoId) {
+      const nextSelectedPhoto = nextPhotos[Math.min(removedIndex, nextPhotos.length - 1)]
+
+      setSelectedPhotoId(nextSelectedPhoto?.id ?? '')
+      setPreviewImage(null)
+    }
   }
 
   function updateMeta(key: keyof PhotoMeta, value: string) {
@@ -303,6 +330,7 @@ function App() {
   return (
     <main className="app-shell">
       <section className="workbench">
+        <div className="preview-column">
         <div className="preview-stage">
           {selectedPhoto && previewImage ? (
             <CanvasPreview
@@ -312,12 +340,65 @@ function App() {
             />
           ) : (
             <div className="photo-output photo-output--empty">
-              <button className="empty-upload" type="button" onClick={() => inputRef.current?.click()}>
+              <button
+                className="empty-upload"
+                type="button"
+                onClick={() => {
+                  uploadModeRef.current = 'replace'
+                  inputRef.current?.click()
+                }}
+              >
                 <span>选择照片</span>
                 <strong>上传 JPEG 后会自动识别 EXIF 信息</strong>
               </button>
             </div>
           )}
+        </div>
+
+          {photos.length ? (
+            <section className="photo-strip" aria-labelledby="batch-title">
+              <h2 id="batch-title">照片队列</h2>
+              <div className="photo-list" role="list">
+                {photos.map((photo, index) => (
+                  <div
+                    className={`photo-list__item ${photo.id === selectedPhoto?.id ? 'photo-list__item--active' : ''}`}
+                    key={photo.id}
+                    role="listitem"
+                  >
+                    <button
+                      className="photo-list__select"
+                      type="button"
+                      onClick={() => setSelectedPhotoId(photo.id)}
+                      aria-label={`选择第 ${index + 1} 张照片：${photo.fileName}`}
+                    >
+                      <img src={photo.url} alt="" loading="lazy" />
+                      <span>{index + 1}</span>
+                      <strong title={photo.fileName}>{photo.fileName}</strong>
+                    </button>
+                    <button
+                      className="photo-list__remove"
+                      type="button"
+                      onClick={() => removePhoto(photo.id)}
+                      aria-label={`删除照片：${photo.fileName}`}
+                      title="删除"
+                    />
+                  </div>
+                ))}
+                <button
+                  className="photo-list__add"
+                  type="button"
+                  onClick={() => {
+                    uploadModeRef.current = 'append'
+                    inputRef.current?.click()
+                  }}
+                  aria-label="添加照片"
+                  title="添加照片"
+                >
+                  <span aria-hidden="true" />
+                </button>
+              </div>
+            </section>
+          ) : null}
         </div>
 
         <aside className="control-panel" aria-label="照片边框编辑">
@@ -340,32 +421,25 @@ function App() {
             <p>为照片生成带设备信息的边框成片。</p>
           </div>
 
-          <label className="file-picker">
-            <input ref={inputRef} type="file" accept="image/*" multiple onChange={handleFileChange} />
+          <label
+            className="file-picker"
+            onClick={() => {
+              uploadModeRef.current = 'replace'
+            }}
+          >
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onClick={(event) => event.stopPropagation()}
+              onChange={handleFileChange}
+            />
             <span>{photos.length ? '更换照片' : '上传照片'}</span>
             <small>
               {photos.length ? `${photos.length} 张照片，当前：${selectedPhoto?.fileName}` : '支持多选照片，JPEG 可读取拍摄参数'}
             </small>
           </label>
-
-          {photos.length > 1 ? (
-            <section className="control-group" aria-labelledby="batch-title">
-              <h2 id="batch-title">照片队列</h2>
-              <div className="photo-list">
-                {photos.map((photo, index) => (
-                  <button
-                    className={`photo-list__item ${photo.id === selectedPhoto?.id ? 'photo-list__item--active' : ''}`}
-                    type="button"
-                    key={photo.id}
-                    onClick={() => setSelectedPhotoId(photo.id)}
-                  >
-                    <span>{index + 1}</span>
-                    <strong>{photo.fileName}</strong>
-                  </button>
-                ))}
-              </div>
-            </section>
-          ) : null}
 
           <section className="control-group" aria-labelledby="template-title">
             <h2 id="template-title">边框模板</h2>
